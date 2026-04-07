@@ -1,11 +1,20 @@
-from src.logging import configure_loggin
-from src.database.core.mongodb_connection import MongoConnection
+
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import uvicorn
+
+from src.logging import configure_loggin
+from src.database.core.mongodb_connection import MongoConnection
+
+
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
+firebase_request = requests.Request()
+
 
 app = FastAPI()
 
@@ -22,20 +31,31 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "templates"))
 async def root(request: Request): 
     id_token = request.cookies.get('token')
     print("COOKIES: ", request.cookies.values())
+    # if not id_token: 
+    #     return RedirectResponse(url="/login")
+    
     return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={
-            "name": "Josh",
-        }
+            request=request,
+            name="index.html",
+            context={
+                "name": "Josh",
+            }
+        )
+
+@app.get("/login", response_class=HTMLResponse)
+async def login(request: Request): 
+    return templates.TemplateResponse(
+        request=request
+        
     )
 
 
 def main():
-    # mongodb_instance = MongoConnection()
-    # users = mongodb_instance.get_connection()
+    configure_loggin(log_level="info")
 
-    # configure_loggin(log_level="debug")
+    mongodb_instance = MongoConnection()
+    users = mongodb_instance.get_connection()
+
     uvicorn.run("main:app", reload=True)
     
 

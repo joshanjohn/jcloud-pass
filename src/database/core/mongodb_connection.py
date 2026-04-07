@@ -1,11 +1,8 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from src.logging import configure_loggin
 from src.utils.variables import mongodb_uri, mongodb_dbname
 import logging
 
-
-configure_loggin("info")
 
 class MongoConnection: 
     _instance = None
