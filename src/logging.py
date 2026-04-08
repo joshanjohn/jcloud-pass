@@ -10,7 +10,7 @@ class LogLevels(StrEnum):
     debug = "DEBUG"
 
 
-def configure_loggin(log_level: str = LogLevels.error): 
+def configure_logging(log_level: str = LogLevels.error): 
     log_level = str(log_level).upper()
     log_levels = [level.value for level in LogLevels]
 

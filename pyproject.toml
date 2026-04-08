@@ -13,4 +13,6 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "requests>=2.33.1",
     "uvicorn>=0.44.0",
+    "firebase-admin>=6.6.0",
+    "python-multipart>=0.0.24",
 ]

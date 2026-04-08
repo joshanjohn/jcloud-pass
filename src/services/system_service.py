@@ -14,8 +14,14 @@ class SystemService:
         pass
 
     # get all dir 
+    def get_all_dir(self): 
+        pass
 
     # rename dir 
+    def rename_dir(self, name: str): 
+        pass
 
     # rename user 
+    def rename_user(self, name: str): 
+        pass
 
