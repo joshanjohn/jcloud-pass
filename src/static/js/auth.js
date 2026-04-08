@@ -89,7 +89,7 @@ function setupListeners() {
                 .then(() => {
                     console.log("Signed out");
                     // Expire the token cookie
-                    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict";
+                    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1900 00:00:00 UTC; SameSite=Strict";
                     window.location = "/";
                 })
                 .catch((error) => {
