@@ -1,7 +1,7 @@
 
-from pydrantic import BaseModel
+from pydantic import BaseModel
 
 class User(BaseModel): 
-    id: int = None
+    id: str = None
     name: str = None
     
