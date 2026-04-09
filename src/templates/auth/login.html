@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | JCloud-Paas</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <link rel="stylesheet" href="{{ url_for('static', path='/style/auth.css') }}">
+    <script type="module" src="/static/js/auth.js"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    
+    <div class="glass w-full max-w-md rounded-2xl p-8 shadow-2xl border border-white/5">
+        <div class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-white tracking-tight mb-2">Welcome Back</h1>
+            <p class="text-slate-400 text-sm">Sign in to your JCloud account</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label for="email" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                <input type="email" id="email" required
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                    placeholder="name@company.com">
+            </div>
+
+            <div>
+                <label for="password" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Password</label>
+                <input type="password" id="password" required
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                    placeholder="••••••••">
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input id="remember" type="checkbox" class="h-4 w-4 rounded border-white/10 bg-white/5 text-blue-600 focus:ring-blue-500">
+                    <label for="remember" class="ml-2 block text-sm text-slate-400">Remember me</label>
+                </div>
+                <div class="text-sm">
+                    <a href="#" class="font-medium text-blue-400 hover:text-blue-300 transition-colors">Forgot password?</a>
+                </div>
+            </div>
+
+            <button type="button" id="login"
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98]">
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-8 pt-8 border-t border-white/10 text-center text-sm">
+            <p class="text-slate-400">
+                Don't have an account? 
+                <a href="/signup" class="text-blue-400 hover:text-blue-300 font-semibold transition-colors ml-1">Create one now</a>
+            </p>
+        </div>
+    </div>
+
+
+</body>
+</html>

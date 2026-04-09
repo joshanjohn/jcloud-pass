@@ -1,11 +1,9 @@
 from pymongo.mongo_client import MongoClient
+from pymongo.collation import Collation
 from pymongo.server_api import ServerApi
-from src.logging import configure_loggin
 from src.utils.variables import mongodb_uri, mongodb_dbname
 import logging
 
-
-configure_loggin("info")
 
 class MongoConnection: 
     _instance = None
@@ -21,7 +19,7 @@ class MongoConnection:
         if MongoConnection._initialized:
             return
         try: 
-            self.client = MongoClient(mongodb_uri, server_api=ServerApi('1'))
+            self.client: MongoClient = MongoClient(mongodb_uri, server_api=ServerApi('1'))
             self.client.admin.command('ping')
             logging.info("You successfully connected to MongoDB!")
             MongoConnection._initialized = True
@@ -30,14 +28,14 @@ class MongoConnection:
             logging.error(str(e))
 
 
-    def get_connection(self): 
+    def get_user_collection(self) -> Collation: 
         db_list = self.client.list_database_names()
         if mongodb_dbname not in db_list:  
             logging.info("Creating mongodb system's db")  
             db =  self.client[mongodb_dbname]
             db.create_collection("users")
             return db
-        return self.client[mongodb_dbname]
+        return self.client[mongodb_dbname]["users"]
         
 
 

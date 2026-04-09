@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace | JCloud-Paas</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <link rel="stylesheet" href="{{ url_for('static', path='/style/workspace.css') }}">
+    <script type="module" src="/static/js/auth.js"></script>
+</head>
+<body class="min-h-screen">
+    
+    <!-- Navigation -->
+    <nav class="glass-nav sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold">J</div>
+                <span class="text-xl font-bold tracking-tight">JCloud <span class="text-blue-500">Paas</span></span>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <div id="user-display" class="hidden md:flex flex-col items-end">
+                    <span  class="text-sm font-medium text-slate-200">{{user_email }}</span>
+                </div>
+                <button id="sign-out" class="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <header class="mb-12">
+            <h2 class="text-3xl font-bold mb-2">Welcome to your Workspace</h2>
+        </header>
+
+        <!-- folder navigation sidebar -->
+
+        
+
+
+      
+        
+    </main>
+
+</body>
+</html>
