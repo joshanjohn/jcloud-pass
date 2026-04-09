@@ -1,8 +1,11 @@
 from pymongo.collation import Collation
+import uuid
 
+from datetime import datetime
 from src.utils.variables import logger
 from src.database.core.mongodb_connection import MongoConnection
 from src.entities.user import User
+from src.entities.directory import Dir, DirMetadata
 
 
 class SystemService: 
@@ -11,8 +14,8 @@ class SystemService:
     def __init__(self, user: User):
         mongodb_instance = MongoConnection()
         self.user_col: Collation = mongodb_instance.get_user_collection()
-
         
+        # if no user info (user id) is provided 
         if not user:
             logger.error("No user provided in system service")
             raise ValueError("No user provided in system service")
@@ -41,7 +44,36 @@ class SystemService:
 
     # create dir 
     def create_dir(self, name: str): 
-        pass
+        # Create metadata
+        timestamp = datetime.now()
+        meta = DirMetadata(
+            size = 0,
+            created=timestamp,
+            updated=timestamp
+        )
+        
+        # Generate a unique ID (UUID)
+        dir_id = str(uuid.uuid4())
+        
+        # Create directory object
+        new_dir = Dir(
+            id=dir_id,
+            name=name,
+            meta=meta, 
+            data=[]
+        )
+        
+        # Update MongoDB
+        try:
+            self.user_col.update_one(
+                {"id": self.user.id},
+                {"$push": {"directory": new_dir.model_dump()}}
+            )
+            logger.info(f"Directory '{name}' created for user {self.user.name}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create directory '{name}': {str(e)}")
+            return False
 
     # remove dir 
     def delete_dir(self, name: str): 
