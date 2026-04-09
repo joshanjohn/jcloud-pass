@@ -4,15 +4,15 @@ from typing import Optional
 
 
 
-class DirMetaData(BaseModel):
+class DirMetadata(BaseModel):
     created: datetime
-    updated: Optional[datetime] = created
-    size: Optional[int] = 0
+    updated: Optional[datetime]
+    size: Optional[float] = 0
  
 
 
 class Dir(BaseModel): 
     id: str 
     name: str 
-    meta: DirMetaData
+    meta: DirMetadata
 
