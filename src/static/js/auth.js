@@ -98,19 +98,7 @@ function setupListeners() {
         });
     }
 
-    // Update UI with user info in workspace
-    const userEmailDisplay = document.getElementById('user-email');
-    const userDisplayContainer = document.getElementById('user-display');
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            if (userEmailDisplay) userEmailDisplay.textContent = user.email;
-            if (userDisplayContainer) {
-                userDisplayContainer.classList.remove('hidden');
-                userDisplayContainer.classList.add('flex');
-            }
-        }
-    });
+    
 }
 
 // Start Initialization
