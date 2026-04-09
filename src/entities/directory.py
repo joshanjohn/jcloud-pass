@@ -7,6 +7,7 @@ from typing import Optional
 class MetaData(BaseModel):
     path: str 
     created: datetime
+    updated: datetime
     size: Optional[int] = 0
  
 

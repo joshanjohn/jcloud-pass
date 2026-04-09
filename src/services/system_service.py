@@ -49,7 +49,11 @@ class SystemService:
 
     # get all dir 
     def get_all_dir(self): 
-        pass
+        doc = self.user_col.find_one(
+            {"id": self.user.id},
+            {"directory": 1, "_id": 0}
+        )
+        return doc 
 
     # rename dir 
     def rename_dir(self, name: str): 
