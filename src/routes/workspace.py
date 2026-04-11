@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Request, status, Body
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from google.oauth2.id_token import verify_firebase_token
@@ -52,3 +52,28 @@ async def workspace(request: Request):
     except Exception as e:
         logger.error(f"Error verifying token: {str(e)}")
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+
+@router.post("/workspace/create_directory")
+async def create_directory(request: Request, name: str = Body(..., embed=True)):
+    id_token = request.cookies.get('token')
+    if not id_token:
+        return {"success": False, "message": "unauthorized"}
+    
+    try:
+        data = verify_firebase_token(id_token, firebase_request_adapter)
+        _user = User(
+            id=data["user_id"], 
+            name=data["email"]
+        )
+        
+        sys_service = SystemService(user=_user)
+        success = sys_service.create_dir(name)
+        
+        if success:
+            return {"success": True, "message": f"Directory '{name}' created"}
+        else:
+            return {"success": False, "message": "Failed to create directory"}
+
+    except Exception as e:
+        logger.error(f"Error creating directory: {str(e)}")
+        return {"success": False, "message": str(e)}
