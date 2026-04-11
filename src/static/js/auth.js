@@ -48,7 +48,7 @@ function setupListeners() {
                     console.log("Logged in successfully");
                     userCredential.user.getIdToken().then((token) => {
                         document.cookie = "token=" + token + ";path=/;SameSite=Strict";
-                        window.location = "/";
+                        window.location = "/workspace";
                     });
                 })
                 .catch((error) => {
@@ -71,7 +71,7 @@ function setupListeners() {
                     console.log("Account created");
                     userCredential.user.getIdToken().then((token) => {
                         document.cookie = "token=" + token + ";path=/;SameSite=Strict";
-                        window.location = "/";
+                        window.location = "/workspace";
                     });
                 })
                 .catch((error) => {
