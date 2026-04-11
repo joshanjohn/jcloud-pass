@@ -1,12 +1,15 @@
 // workspace.js — handles workspace UI interactions
 
+// Read current path from meta tag injected by the server
+const currentPath = document.querySelector('meta[name="workspace:path"]')?.content || "/";
+
 document.addEventListener("DOMContentLoaded", () => {
   initCreateFolder();
 });
 
 /* ── Create Folder ──────────────────────────────────────────────── */
 
-function initCreateFolder() {
+function initCreateFolder(   ) {
   const btn = document.getElementById("create-folder-btn");
   if (!btn) return;
 
@@ -114,7 +117,7 @@ async function submitCreateFolder(input, errorEl, confirmBtn, btnLabel, btnSpinn
     const res = await fetch("/workspace/create_directory", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, path: currentPath }),
     });
 
     const data = await res.json();

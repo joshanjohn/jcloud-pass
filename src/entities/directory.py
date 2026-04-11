@@ -8,6 +8,7 @@ class DirMetadata(BaseModel):
     created: datetime
     updated: Optional[datetime]
     size: Optional[float] = 0
+    path: str
  
 
 

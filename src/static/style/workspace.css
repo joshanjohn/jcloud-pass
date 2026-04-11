@@ -108,6 +108,9 @@ body {
 }
 
 .folder-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
     background: white;
     border: 1px solid var(--border-color);
     border-radius: 1rem;

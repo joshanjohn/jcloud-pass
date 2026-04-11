@@ -43,13 +43,14 @@ class SystemService:
         logger.info(f"User Collection found for {self.user.name}")
 
     # create dir 
-    def create_dir(self, name: str): 
+    def create_dir(self, name: str, dir_path: str): 
         # Create metadata
         timestamp = datetime.now()
         meta = DirMetadata(
             size = 0,
             created=timestamp,
-            updated=timestamp
+            updated=timestamp,
+            path=dir_path
         )
         
         # Generate a unique ID (UUID)
@@ -85,7 +86,29 @@ class SystemService:
             {"id": self.user.id},
             {"directory": 1, "_id": 0}
         )
-        return doc 
+        return doc
+
+    def _parent_path(self, dir_path: str) -> str:
+        """Returns the parent path of a directory path string."""
+        parts = dir_path.rsplit("/", 1)
+        # parts[0] is empty string for root-level paths like '/docs'
+        return parts[0] if len(parts) == 2 and parts[0] else "/"
+
+    # get dirs in a specific path
+    def get_dirs_in_path(self, path: str):
+        """Returns directories whose immediate parent is the given path."""
+        doc = self.user_col.find_one(
+            {"id": self.user.id},
+            {"directory": 1, "_id": 0}
+        )
+        if not doc or "directory" not in doc:
+            return {"directory": []}
+
+        children = [
+            d for d in doc["directory"]
+            if self._parent_path(d.get("meta", {}).get("path", "")) == path
+        ]
+        return {"directory": children}
 
     # rename dir 
     def rename_dir(self, name: str): 

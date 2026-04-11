@@ -8,6 +8,7 @@ from pathlib import Path
 from src.services.system_service import SystemService
 from src.utils.variables import logger
 from src.entities.user import User
+from src.utils.validation import token_validation
 
 router = APIRouter()
 
@@ -21,53 +22,66 @@ firebase_request_adapter = requests.Request()
 async def workspace(request: Request):
     id_token = request.cookies.get('token')
 
-    if not id_token:
-        # redirect to login 
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    validation_result = token_validation(id_token)
+    if isinstance(validation_result, RedirectResponse):
+        return validation_result
+    
+    data = validation_result
     
     try:
-        data = verify_firebase_token(id_token, firebase_request_adapter)
         _user = User(
             id=data["user_id"], 
             name=data["email"]
         )
 
-        directories = {"directory": []}
-        try: 
-            sys_service = SystemService(user=_user)
-            directories = sys_service.get_all_dir()
+        sys_service = SystemService(user=_user)
+        sidebar_dirs = sys_service.get_dirs_in_path("/")
+        current_dirs  = sidebar_dirs  # root view shows root-level dirs
 
-        except Exception as e: 
-            logger.error(f"Error in SystemService: {str(e)}")
-            pass
-        
         return templates.TemplateResponse(
             request=request,
             name="workspace/workspace.html", 
             context={
                 "user_email": data["email"], 
-                "directories": directories
+                "sidebar_dirs": sidebar_dirs,
+                "current_dirs": current_dirs,
+                "path": "/",
+                "breadcrumbs": [],
             }
         )
     except Exception as e:
-        logger.error(f"Error verifying token: {str(e)}")
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+        logger.error(f"Error in workspace route: {str(e)}")
+        response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+        response.delete_cookie("token")
+        return response
 
 @router.post("/workspace/create_directory")
-async def create_directory(request: Request, name: str = Body(..., embed=True)):
+async def create_directory(
+    request: Request,
+    name: str = Body(..., embed=True),
+    path: str = Body("/", embed=True)
+):
     id_token = request.cookies.get('token')
-    if not id_token:
-        return {"success": False, "message": "unauthorized"}
     
+    validation_result = token_validation(id_token)
+    if isinstance(validation_result, RedirectResponse):
+        return validation_result
+    
+    data = validation_result
+
     try:
-        data = verify_firebase_token(id_token, firebase_request_adapter)
         _user = User(
             id=data["user_id"], 
             name=data["email"]
         )
         
         sys_service = SystemService(user=_user)
-        success = sys_service.create_dir(name)
+
+        # Build the full path: root stays "/", nested appends "/name"
+        clean_path = path.rstrip("/") if path != "/" else ""
+        full_path = f"{clean_path}/{name}"
+
+        success = sys_service.create_dir(name, full_path)
         
         if success:
             return {"success": True, "message": f"Directory '{name}' created"}
@@ -77,3 +91,64 @@ async def create_directory(request: Request, name: str = Body(..., embed=True)):
     except Exception as e:
         logger.error(f"Error creating directory: {str(e)}")
         return {"success": False, "message": str(e)}
+
+
+@router.get("/workspace/{folder_path:path}", response_class=HTMLResponse)
+async def workspace_subdir(request: Request, folder_path: str):
+    id_token = request.cookies.get('token')
+    
+    validation_result = token_validation(id_token)
+    if isinstance(validation_result, RedirectResponse):
+        return validation_result
+    
+    data = validation_result
+
+    try:
+        _user = User(
+            id=data["user_id"],
+            name=data["email"]
+        )
+
+        sys_service = SystemService(user=_user)
+
+        # Normalise to an absolute path: /docs/projects
+        current_path = "/" + folder_path.strip("/")
+
+        # Validate the path exists as a stored directory
+        all_dirs = sys_service.get_all_dir()
+        all_paths = {
+            d.get("meta", {}).get("path", "")
+            for d in (all_dirs or {}).get("directory", [])
+        }
+        if current_path not in all_paths:
+            return RedirectResponse(url="/workspace", status_code=status.HTTP_303_SEE_OTHER)
+
+        # Sidebar always shows root-level dirs
+        sidebar_dirs = sys_service.get_dirs_in_path("/")
+        # Main grid shows immediate children of current path
+        current_dirs = sys_service.get_dirs_in_path(current_path)
+
+        # Build breadcrumbs: [{name, url}, ...]
+        segments = [s for s in folder_path.split("/") if s]
+        breadcrumbs = [
+            {"name": seg, "url": "/workspace/" + "/".join(segments[: i + 1])}
+            for i, seg in enumerate(segments)
+        ]
+
+        return templates.TemplateResponse(
+            request=request,
+            name="workspace/workspace_subdir.html",
+            context={
+                "user_email": data["email"],
+                "sidebar_dirs": sidebar_dirs,
+                "current_dirs": current_dirs,
+                "path": current_path,
+                "breadcrumbs": breadcrumbs,
+            },
+        )
+
+    except Exception as e:
+        logger.error(f"Error in workspace_subdir: {str(e)}")
+        response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+        response.delete_cookie("token")
+        return response
