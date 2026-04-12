@@ -171,6 +171,43 @@
             {% endif %}
         </div>
 
+        <!-- Create Folder Modal -->
+        <div id="create-folder-modal" class="hidden">
+            <div class="modal-backdrop" id="modal-backdrop">
+                <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                    <form action="/workspace/create_directory" method="POST">
+                        <div class="modal-header">
+                            <span id="modal-title">New Folder</span>
+                            <button type="button" class="modal-close" id="modal-close-btn" aria-label="Close">&#x2715;</button>
+                        </div>
+
+                        <div class="modal-body">
+                            <label for="folder-name-input" class="modal-label">Folder name</label>
+                            <input
+                                name="name"
+                                id="folder-name-input"
+                                type="text"
+                                class="modal-input"
+                                placeholder="e.g. My Folder"
+                                maxlength="64"
+                                autocomplete="off"
+                                required
+                            />
+                            <input type="hidden" name="path" value="{{ path }}">
+                            <p id="modal-error" class="modal-error hidden"></p>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn-secondary" id="modal-cancel-btn">Cancel</button>
+                            <button type="submit" class="btn-primary" id="modal-confirm-btn">
+                                <span id="btn-label">Create</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script>
