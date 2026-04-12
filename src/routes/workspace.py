@@ -106,7 +106,7 @@ async def create_directory(
 
     except Exception as e:
         logger.error(f"Error creating directory: {str(e)}")
-        return RedirectResponse(url=f"{redirect_url}?error=Server+Error", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(str(e))}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 
