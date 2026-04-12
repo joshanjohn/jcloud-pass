@@ -5,7 +5,7 @@ from google.auth.transport import requests
 from pathlib import Path
 
 from src.services.system_service import SystemService
-from src.utils.variables import logger
+from src.utils import logger
 from src.entities.user import User
 from src.utils.validation import token_validation
 
@@ -35,7 +35,7 @@ async def workspace(request: Request):
         current_user = User(id=data["user_id"] , email=data["email"])
 
         sys_service = SystemService(user=current_user)
-        current_user
+        current_user = sys_service.get_current_user()
         # display available dir in root dir 
         sidebar_dirs = sys_service.get_dirs_in_path("/")
         workspace_dirs  = sidebar_dirs  # root view shows root-level dirs
@@ -44,6 +44,7 @@ async def workspace(request: Request):
             request=request,
             name="workspace/workspace.html", 
             context={
+                "username": current_user.name,
                 "user_email": data["email"], 
                 "sidebar_dirs": sidebar_dirs,
                 "workspace_dirs": workspace_dirs,
