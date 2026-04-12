@@ -1,18 +1,20 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 
 
-class MetaData(BaseModel):
-    path: str 
+class DirMetadata(BaseModel):
     created: datetime
-    size: Optional[int] = 0
+    updated: Optional[datetime]
+    size: Optional[float] = 0
+    path: str
  
 
 
 class Dir(BaseModel): 
-    id: int 
+    id: str 
     name: str 
-    meta: MetaData
+    meta: DirMetadata
+    data: Optional[list[dict]] = None
 

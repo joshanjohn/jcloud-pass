@@ -1,5 +1,5 @@
 from pymongo.mongo_client import MongoClient
-from pymongo.collation import Collation
+from pymongo.collection import Collection
 from pymongo.server_api import ServerApi
 from src.utils.variables import mongodb_uri, mongodb_dbname
 import logging
@@ -28,7 +28,7 @@ class MongoConnection:
             logging.error(str(e))
 
 
-    def get_user_collection(self) -> Collation: 
+    def get_users_collection(self) -> Collection: 
         db_list = self.client.list_database_names()
         if mongodb_dbname not in db_list:  
             logging.info("Creating mongodb system's db")  
