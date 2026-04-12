@@ -1,14 +1,12 @@
 from pymongo.collection import Collection
-import uuid
 
-from datetime import datetime
-from src.utils import logger, get_username_from_email, get_parent_path
+from src.utils import logger, get_username_from_email
 from src.database.core.mongodb_connection import MongoConnection
 from src.entities.user import User
-from src.entities.directory import Dir, DirMetadata
 
+from src.services.directory_service import DirectoryService
 
-class SystemService: 
+class SystemService(DirectoryService):
    
 
     def __init__(self, user: User):
@@ -48,74 +46,6 @@ class SystemService:
     def get_current_user(self) -> User: 
         return self.user
 
-    # create dir 
-    def create_dir(self, name: str, dir_path: str): 
-        # Create metadata
-        timestamp = datetime.now()
-        meta = DirMetadata(
-            size = 0,
-            created=timestamp,
-            updated=timestamp,
-            path=dir_path
-        )
-        
-        # Generate a unique ID 
-        dir_id = str(uuid.uuid4())
-        
-        # Create directory object
-        new_dir = Dir(
-            id=dir_id,
-            name=name,
-            meta=meta, 
-            data=[]
-        )
-        
-        # Update MongoDB
-        try:
-            self.users_col.update_one(
-                {"id": self.user.id},
-                {"$push": {"directory": new_dir.model_dump()}}
-            )
-            logger.info(f"Directory '{name}' created for user {self.user.name}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to create directory '{name}' for user {self.user.name}: {str(e)}")
-            return False
-
-    # remove dir 
-    def delete_dir(self, name: str): 
-        pass
-
-    # get all dir 
-    def get_all_dir(self): 
-        doc = self.users_col.find_one(
-            {"id": self.user.id},
-            {"directory": 1, "_id": 0}
-        )
-        return doc
-    
-
-    # get dirs in a specific path
-    def get_dirs_in_path(self, path: str):
-        """Returns directories whose immediate parent is the given path."""
-        doc = self.users_col.find_one(
-            {"id": self.user.id},
-            {"directory": 1, "_id": 0}
-        )
-        if not doc or "directory" not in doc:
-            return {"directory": []}
-
-        children = [
-            d for d in doc["directory"]
-            if get_parent_path(d.get("meta", {}).get("path", "")) == path
-        ]
-        return {"directory": children}
-
-    # rename dir 
-    def rename_dir(self, name: str): 
-        pass
-
-    # rename user 
     def rename_user(self, name: str): 
         pass
 
