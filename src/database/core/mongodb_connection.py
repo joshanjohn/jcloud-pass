@@ -28,7 +28,7 @@ class MongoConnection:
             logging.error(str(e))
 
 
-    def get_user_collection(self) -> Collection: 
+    def get_users_collection(self) -> Collection: 
         db_list = self.client.list_database_names()
         if mongodb_dbname not in db_list:  
             logging.info("Creating mongodb system's db")  
