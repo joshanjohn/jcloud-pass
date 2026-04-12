@@ -2,14 +2,13 @@ from pymongo.collection import Collection
 import uuid
 
 from datetime import datetime
-from src.utils.variables import logger
-from src.utils.helper import get_username_from_email
+from src.utils import logger, get_username_from_email
 from src.database.core.mongodb_connection import MongoConnection
 from src.entities.user import User
 from src.entities.directory import Dir, DirMetadata
 
 
-class SystemService(Dire): 
+class SystemService: 
    
 
     def __init__(self, user: User):
