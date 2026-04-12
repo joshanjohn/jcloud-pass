@@ -1,8 +1,8 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.collection import Collection
 from pymongo.server_api import ServerApi
-from src.utils.variables import mongodb_uri, mongodb_dbname
-import logging
+from src.utils import mongodb_uri, mongodb_dbname, logger
+
 
 
 class MongoConnection: 
@@ -21,17 +21,17 @@ class MongoConnection:
         try: 
             self.client: MongoClient = MongoClient(mongodb_uri, server_api=ServerApi('1'))
             self.client.admin.command('ping')
-            logging.info("You successfully connected to MongoDB!")
+            logger.info("You successfully connected to MongoDB!")
             MongoConnection._initialized = True
         except Exception as e: 
-            logging.error("Unable to connect to Mongodb")
-            logging.error(str(e))
+            logger.error("Unable to connect to Mongodb")
+            logger.error(str(e))
 
 
     def get_users_collection(self) -> Collection: 
         db_list = self.client.list_database_names()
         if mongodb_dbname not in db_list:  
-            logging.info("Creating mongodb system's db")  
+            logger.info("Creating mongodb system's db")  
             db =  self.client[mongodb_dbname]
             db.create_collection("users")
             return db

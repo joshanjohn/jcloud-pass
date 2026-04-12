@@ -2,14 +2,13 @@ from pymongo.collection import Collection
 import uuid
 
 from datetime import datetime
-from src.utils import logger, get_username_from_email
+from src.utils import logger, get_username_from_email, get_parent_path
 from src.database.core.mongodb_connection import MongoConnection
 from src.entities.user import User
 from src.entities.directory import Dir, DirMetadata
 
 
 class SystemService: 
-   
 
     def __init__(self, user: User):
 
@@ -24,8 +23,6 @@ class SystemService:
         self.users_col: Collection = mongodb_instance.get_users_collection()
 
         self.init_system()
-
-
 
        
     def init_system(self):
@@ -46,7 +43,10 @@ class SystemService:
         self.user.name = doc["name"]
         logger.info(f"User Collection found for {self.user.name} - {self.user.email}")
 
-    
+
+    def get_current_user(self) -> User: 
+        return self.user
+
     # create dir 
     def create_dir(self, name: str, dir_path: str): 
         # Create metadata
@@ -92,12 +92,7 @@ class SystemService:
             {"directory": 1, "_id": 0}
         )
         return doc
-
-    def _parent_path(self, dir_path: str) -> str:
-        """Returns the parent path of a directory path string."""
-        parts = dir_path.rsplit("/", 1)
-        # parts[0] is empty string for root-level paths like '/docs'
-        return parts[0] if len(parts) == 2 and parts[0] else "/"
+    
 
     # get dirs in a specific path
     def get_dirs_in_path(self, path: str):
@@ -111,7 +106,7 @@ class SystemService:
 
         children = [
             d for d in doc["directory"]
-            if self._parent_path(d.get("meta", {}).get("path", "")) == path
+            if get_parent_path(d.get("meta", {}).get("path", "")) == path
         ]
         return {"directory": children}
 
