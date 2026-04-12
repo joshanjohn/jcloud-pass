@@ -1,4 +1,3 @@
-// workspace.js — handles workspace UI interactions
 
 document.addEventListener("DOMContentLoaded", () => {
     initCreateFolder();
@@ -60,7 +59,7 @@ function initCreateFolder() {
 }
 
 function checkErrors() {
-    // If the server redirected back with an ?error= message, let's open the modal automatically and show it
+    // If the server redirected back with an ?error= message, 
     const urlParams = new URLSearchParams(window.location.search);
     const errorMsg = urlParams.get('error');
     if (errorMsg) {
