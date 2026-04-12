@@ -1,13 +1,13 @@
-from fastapi import APIRouter, Request, status, Body
+from fastapi import APIRouter, Request, status, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from google.auth.transport import requests
 from pathlib import Path
+import urllib.parse
 
 from src.services.system_service import SystemService
-from src.utils.variables import logger
+from src.utils import logger, token_validation, valid_dir_name
 from src.entities.user import User
-from src.utils.validation import token_validation
 
 router = APIRouter()
 
@@ -21,6 +21,11 @@ current_user = None
 
 @router.get("/workspace", response_class=HTMLResponse)
 async def workspace(request: Request):
+    """
+    Render workspace page
+    """
+    logger.info("GET request for '/workspace'")
+
     # getting token from cookies 
     id_token = request.cookies.get('token')
 
@@ -35,7 +40,7 @@ async def workspace(request: Request):
         current_user = User(id=data["user_id"] , email=data["email"])
 
         sys_service = SystemService(user=current_user)
-        current_user
+        current_user = sys_service.get_current_user()
         # display available dir in root dir 
         sidebar_dirs = sys_service.get_dirs_in_path("/")
         workspace_dirs  = sidebar_dirs  # root view shows root-level dirs
@@ -44,6 +49,7 @@ async def workspace(request: Request):
             request=request,
             name="workspace/workspace.html", 
             context={
+                "username": current_user.name,
                 "user_email": data["email"], 
                 "sidebar_dirs": sidebar_dirs,
                 "workspace_dirs": workspace_dirs,
@@ -60,9 +66,14 @@ async def workspace(request: Request):
 @router.post("/workspace/create_directory")
 async def create_directory(
     request: Request,
-    name: str = Body(..., embed=True),
-    path: str = Body("/", embed=True)
+    name: str = Form(...),
+    path: str = Form("/")
 ):
+    """
+    POST request for creating a directory with name on path
+    """    
+    logger.info(f"POST request for '/workspace/create_directory'")
+    
     id_token = request.cookies.get('token')
     
     # validating id token 
@@ -72,13 +83,15 @@ async def create_directory(
     
     data = validation_result
 
+    name, error = valid_dir_name(name)
+    redirect_url = f"/workspace{path if path != '/' else ''}"
+
+    if error:
+        return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(error['message'])}", status_code=status.HTTP_303_SEE_OTHER)
+
     try:
-        _user = User(
-            id=data["user_id"], 
-            email=data["email"]
-        )
-        
-        sys_service = SystemService(user=_user)
+        current_user = User(id=data["user_id"] , email=data["email"])
+        sys_service = SystemService(user=current_user)
 
         # Build the full path: root stays "/", nested appends "/name"
         clean_path = path.rstrip("/") if path != "/" else ""
@@ -87,17 +100,24 @@ async def create_directory(
         success = sys_service.create_dir(name, full_path)
         
         if success:
-            return {"success": True, "message": f"Directory '{name}' created"}
+            return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
         else:
-            return {"success": False, "message": "Failed to create directory"}
+            return RedirectResponse(url=f"{redirect_url}?error=Failed+to+create+directory", status_code=status.HTTP_303_SEE_OTHER)
 
     except Exception as e:
         logger.error(f"Error creating directory: {str(e)}")
-        return {"success": False, "message": str(e)}
+        return RedirectResponse(url=f"{redirect_url}?error=Server+Error", status_code=status.HTTP_303_SEE_OTHER)
+
 
 
 @router.get("/workspace/{folder_path:path}", response_class=HTMLResponse)
 async def workspace_subdir(request: Request, folder_path: str):
+    """
+    Render workspace_subdir page
+    """
+    logger.info(f"GET request for '/workspace/ {folder_path}'")
+
+    
     id_token = request.cookies.get('token')
     
     validation_result = token_validation(id_token)
@@ -107,13 +127,13 @@ async def workspace_subdir(request: Request, folder_path: str):
     data = validation_result
 
     try:
-        _user = User(
+        current_user = User(
             id=data["user_id"],
             email=data["email"]
         )
 
-        sys_service = SystemService(user=_user)
-
+        sys_service = SystemService(user=current_user)
+        current_user = sys_service.get_current_user()
         # Normalise to an absolute path: /docs/projects
         current_path = "/" + folder_path.strip("/")
 
@@ -142,6 +162,7 @@ async def workspace_subdir(request: Request, folder_path: str):
             request=request,
             name="workspace/workspace_subdir.html",
             context={
+                "username": current_user.name,
                 "user_email": data["email"],
                 "sidebar_dirs": sidebar_dirs,
                 "workspace_dirs": workspace_dirs,

@@ -1,11 +1,9 @@
-import os
-import logging
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
-from src.utils.variables import firebase_api_key
+from src.utils import firebase_api_key, logger
 
 router = APIRouter()
 
@@ -17,7 +15,11 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "templates"))
 
 @router.get("/auth/config")
 async def get_firebase_config():
-    """Returns Firebase public configuration for the frontend."""
+    """
+    Returns Firebase public configuration for the frontend
+    """
+
+    logger.info("GET request for '/auth/config'")
     return {
         "apiKey": firebase_api_key,
         "authDomain": "jcloud-paas.firebaseapp.com",
@@ -30,6 +32,11 @@ async def get_firebase_config():
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request): 
+    """
+    Render login page
+    """
+    logger.info("GET request for '/login'")
+
     return templates.TemplateResponse(
         request=request, 
         name="auth/login.html"
@@ -37,6 +44,10 @@ async def login_page(request: Request):
 
 @router.get("/signup", response_class=HTMLResponse)
 async def signup_page(request: Request): 
+    """
+    Render signup page
+    """
+    logger.info("GET request for '/signup'")
     return templates.TemplateResponse(
         request=request, 
         name="auth/signup.html"

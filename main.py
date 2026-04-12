@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from src.routes.auth import router as auth_router
-from src.utils.variables import logger
+from src.utils import logger
 from src.routes.workspace import router as workspace_router
 
 
