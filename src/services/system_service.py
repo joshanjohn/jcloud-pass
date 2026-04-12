@@ -9,7 +9,7 @@ from src.entities.user import User
 from src.entities.directory import Dir, DirMetadata
 
 
-class SystemService(Dire): 
+class SystemService: 
    
 
     def __init__(self, user: User):
