@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Request, status, Body
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from google.oauth2.id_token import verify_firebase_token
 from google.auth.transport import requests
 from pathlib import Path
 
@@ -18,25 +17,28 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "templates"))
 
 firebase_request_adapter = requests.Request()
 
+current_user = None
+
 @router.get("/workspace", response_class=HTMLResponse)
 async def workspace(request: Request):
+    # getting token from cookies 
     id_token = request.cookies.get('token')
 
+    # token validation 
     validation_result = token_validation(id_token)
-    if isinstance(validation_result, RedirectResponse):
+    if isinstance(validation_result, RedirectResponse): # handling redirect 
         return validation_result
     
     data = validation_result
     
     try:
-        _user = User(
-            id=data["user_id"], 
-            name=data["email"]
-        )
+        current_user = User(id=data["user_id"] , email=data["email"])
 
-        sys_service = SystemService(user=_user)
+        sys_service = SystemService(user=current_user)
+        current_user
+        # display available dir in root dir 
         sidebar_dirs = sys_service.get_dirs_in_path("/")
-        current_dirs  = sidebar_dirs  # root view shows root-level dirs
+        workspace_dirs  = sidebar_dirs  # root view shows root-level dirs
 
         return templates.TemplateResponse(
             request=request,
@@ -44,7 +46,7 @@ async def workspace(request: Request):
             context={
                 "user_email": data["email"], 
                 "sidebar_dirs": sidebar_dirs,
-                "current_dirs": current_dirs,
+                "workspace_dirs": workspace_dirs,
                 "path": "/",
                 "breadcrumbs": [],
             }
@@ -63,6 +65,7 @@ async def create_directory(
 ):
     id_token = request.cookies.get('token')
     
+    # validating id token 
     validation_result = token_validation(id_token)
     if isinstance(validation_result, RedirectResponse):
         return validation_result
@@ -72,7 +75,7 @@ async def create_directory(
     try:
         _user = User(
             id=data["user_id"], 
-            name=data["email"]
+            email=data["email"]
         )
         
         sys_service = SystemService(user=_user)
@@ -106,7 +109,7 @@ async def workspace_subdir(request: Request, folder_path: str):
     try:
         _user = User(
             id=data["user_id"],
-            name=data["email"]
+            email=data["email"]
         )
 
         sys_service = SystemService(user=_user)
@@ -126,7 +129,7 @@ async def workspace_subdir(request: Request, folder_path: str):
         # Sidebar always shows root-level dirs
         sidebar_dirs = sys_service.get_dirs_in_path("/")
         # Main grid shows immediate children of current path
-        current_dirs = sys_service.get_dirs_in_path(current_path)
+        workspace_dirs = sys_service.get_dirs_in_path(current_path)
 
         # Build breadcrumbs: [{name, url}, ...]
         segments = [s for s in folder_path.split("/") if s]
@@ -141,7 +144,7 @@ async def workspace_subdir(request: Request, folder_path: str):
             context={
                 "user_email": data["email"],
                 "sidebar_dirs": sidebar_dirs,
-                "current_dirs": current_dirs,
+                "workspace_dirs": workspace_dirs,
                 "path": current_path,
                 "breadcrumbs": breadcrumbs,
             },

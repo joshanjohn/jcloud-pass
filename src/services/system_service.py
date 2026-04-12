@@ -1,47 +1,53 @@
-from pymongo.collation import Collation
+from pymongo.collection import Collection
 import uuid
 
 from datetime import datetime
 from src.utils.variables import logger
+from src.utils.helper import get_username_from_email
 from src.database.core.mongodb_connection import MongoConnection
 from src.entities.user import User
 from src.entities.directory import Dir, DirMetadata
 
 
-class SystemService: 
+class SystemService(Dire): 
    
 
     def __init__(self, user: User):
-        mongodb_instance = MongoConnection()
-        self.user_col: Collation = mongodb_instance.get_user_collection()
-        
+
         # if no user info (user id) is provided 
         if not user:
             logger.error("No user provided in system service")
             raise ValueError("No user provided in system service")
+       
+        self.user: User = user
 
-        self.user = user
+        mongodb_instance = MongoConnection()
+        self.users_col: Collection = mongodb_instance.get_users_collection()
 
         self.init_system()
-       
 
+
+
+       
     def init_system(self):
         # Try to find user
-        doc = self.user_col.find_one({"id": self.user.id})
-
+        doc = self.users_col.find_one({"id": self.user.id})
         if not doc:
+            # creating user document in database 
             logger.info("No document found in MongoDB for user")
-
-            # Ensure directory exists when creating
+            # set username as email domain initially. 
+            self.user.name = get_username_from_email(self.user.email)
             user_data = self.user.model_dump()
             user_data["directory"] = []
 
-            self.user_col.insert_one(user_data)
-            logger.info(f"Mongodb user collection initiated for {self.user.name}")
+            self.users_col.insert_one(user_data)
+            logger.info(f"Mongodb user collection initiated for {self.user.name} - {self.user.email}")
             return
+        # update name from fetched doc 
+        self.user.name = doc["name"]
+        logger.info(f"User Collection found for {self.user.name} - {self.user.email}")
 
-        logger.info(f"User Collection found for {self.user.name}")
-
+    
     # create dir 
     def create_dir(self, name: str, dir_path: str): 
         # Create metadata
@@ -53,7 +59,7 @@ class SystemService:
             path=dir_path
         )
         
-        # Generate a unique ID (UUID)
+        # Generate a unique ID 
         dir_id = str(uuid.uuid4())
         
         # Create directory object
@@ -66,14 +72,14 @@ class SystemService:
         
         # Update MongoDB
         try:
-            self.user_col.update_one(
+            self.users_col.update_one(
                 {"id": self.user.id},
                 {"$push": {"directory": new_dir.model_dump()}}
             )
             logger.info(f"Directory '{name}' created for user {self.user.name}")
             return True
         except Exception as e:
-            logger.error(f"Failed to create directory '{name}': {str(e)}")
+            logger.error(f"Failed to create directory '{name}' for user {self.user.name}: {str(e)}")
             return False
 
     # remove dir 
@@ -82,7 +88,7 @@ class SystemService:
 
     # get all dir 
     def get_all_dir(self): 
-        doc = self.user_col.find_one(
+        doc = self.users_col.find_one(
             {"id": self.user.id},
             {"directory": 1, "_id": 0}
         )
@@ -97,7 +103,7 @@ class SystemService:
     # get dirs in a specific path
     def get_dirs_in_path(self, path: str):
         """Returns directories whose immediate parent is the given path."""
-        doc = self.user_col.find_one(
+        doc = self.users_col.find_one(
             {"id": self.user.id},
             {"directory": 1, "_id": 0}
         )
