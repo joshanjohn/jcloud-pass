@@ -1,0 +1,11 @@
+services:
+  jcloud:
+    image: mcr.microsoft.com/azure-storage/azurite:3.29.0-arm64
+    container_name: jcloud_azurite
+    ports:
+      - "10000:10000" # Only Blob service port
+    volumes:
+      - /Users/joshan/Documents/CSP/jcloud-pass/azure/data:/data
+      - /Users/joshan/Documents/CSP/jcloud-pass/.logs:/logs
+    # Explicitly calling 'azurite-blob' instead of 'azurite'
+    command: "azurite-blob --skipApiVersionCheck --blobHost 0.0.0.0 --location /data --debug /logs/debug.log"
