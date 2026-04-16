@@ -12,8 +12,8 @@ def token_validation(token: str):
     if not token:
         logger.error("No Token Found!")
         response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-        logger.info("Clear token cookies.. ")
         response.delete_cookie("token")
+        logger.info("Clear token cookies.. ")
         return response
 
     try:

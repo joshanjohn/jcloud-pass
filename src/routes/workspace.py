@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, status, Form
+from fastapi import APIRouter, Request, status, Form, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from google.auth.transport import requests
@@ -6,6 +6,7 @@ from pathlib import Path
 import urllib.parse
 
 from src.services.system_service import SystemService
+from src.services.directory_service import DirectoryService
 from src.utils import logger, token_validation, valid_dir_name
 from src.entities.user import User
 
@@ -40,10 +41,14 @@ async def workspace(request: Request):
         current_user = User(id=data["user_id"] , email=data["email"])
 
         sys_service = SystemService(user=current_user)
-        current_user = sys_service.get_current_user()
+        current_user = sys_service.get_user()
+        
         # display available dir in root dir 
         sidebar_dirs = sys_service.get_dirs_in_path("/")
         workspace_dirs  = sidebar_dirs  # root view shows root-level dirs
+        
+        # Display files via Azure Storage using list_dirs
+        workspace_files = sys_service.storage_service.list_dirs("/")
 
         return templates.TemplateResponse(
             request=request,
@@ -53,6 +58,7 @@ async def workspace(request: Request):
                 "user_email": data["email"], 
                 "sidebar_dirs": sidebar_dirs,
                 "workspace_dirs": workspace_dirs,
+                "workspace_files": workspace_files,
                 "path": "/",
                 "breadcrumbs": [],
             }
@@ -85,13 +91,14 @@ async def create_directory(
 
     name, error = valid_dir_name(name)
     redirect_url = f"/workspace{path if path != '/' else ''}"
-
     if error:
         return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(error['message'])}", status_code=status.HTTP_303_SEE_OTHER)
 
     try:
         current_user = User(id=data["user_id"] , email=data["email"])
         sys_service = SystemService(user=current_user)
+        current_user = sys_service.get_user()
+        
 
         # Build the full path: root stays "/", nested appends "/name"
         clean_path = path.rstrip("/") if path != "/" else ""
@@ -110,6 +117,58 @@ async def create_directory(
 
 
 
+
+@router.post("/workspace/upload")
+async def upload_file(
+    request: Request,
+    file: UploadFile = File(...),
+    path: str = Form("/")
+):
+    """
+    POST request for uploading a file to a path
+    """
+    logger.info(f"POST request for '/workspace/upload'")
+    
+    id_token = request.cookies.get('token')
+    
+    validation_result = token_validation(id_token)
+    if isinstance(validation_result, RedirectResponse):
+        return validation_result
+    
+    data = validation_result
+    redirect_url = f"/workspace{path if path != '/' else ''}"
+
+    try:
+        current_user = User(id=data["user_id"] , email=data["email"])
+        sys_service = SystemService(user=current_user)
+        current_user = sys_service.get_user()
+        
+
+        # Build the full path
+        clean_path = path.strip("/")
+        logger.info(f"CLEAN PATH: {clean_path}")
+        if clean_path:
+            full_path = f"{clean_path}/{file.filename}"
+        else:
+            full_path = file.filename
+        
+        # Read the file contents
+        file_data = await file.read()
+
+        # Upload the file
+        success = sys_service.storage_service.upload_file(full_path, file_data)
+        
+        if success:
+            return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
+        else:
+            return RedirectResponse(url=f"{redirect_url}?error=Failed+to+upload+file", status_code=status.HTTP_303_SEE_OTHER)
+
+    except Exception as e:
+        logger.error(f"Error uploading file: {str(e)}")
+        return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(str(e))}", status_code=status.HTTP_303_SEE_OTHER)
+
+
+
 @router.get("/workspace/{folder_path:path}", response_class=HTMLResponse)
 async def workspace_subdir(request: Request, folder_path: str):
     """
@@ -117,7 +176,6 @@ async def workspace_subdir(request: Request, folder_path: str):
     """
     logger.info(f"GET request for '/workspace/ {folder_path}'")
 
-    
     id_token = request.cookies.get('token')
     
     validation_result = token_validation(id_token)
@@ -133,7 +191,8 @@ async def workspace_subdir(request: Request, folder_path: str):
         )
 
         sys_service = SystemService(user=current_user)
-        current_user = sys_service.get_current_user()
+        current_user = sys_service.get_user()
+        
         # Normalise to an absolute path: /docs/projects
         current_path = "/" + folder_path.strip("/")
 
@@ -147,9 +206,12 @@ async def workspace_subdir(request: Request, folder_path: str):
             return RedirectResponse(url="/workspace", status_code=status.HTTP_303_SEE_OTHER)
 
         # Sidebar always shows root-level dirs
-        sidebar_dirs = sys_service.get_dirs_in_path("/")
+        sidebar_dirs = sys_service.get_dirs_in_path(current_path)
         # Main grid shows immediate children of current path
         workspace_dirs = sys_service.get_dirs_in_path(current_path)
+        
+        # Fetch blobs associated with current_path using list_dirs
+        workspace_files = sys_service.storage_service.list_dirs(current_path)
 
         # Build breadcrumbs: [{name, url}, ...]
         segments = [s for s in folder_path.split("/") if s]
@@ -166,6 +228,7 @@ async def workspace_subdir(request: Request, folder_path: str):
                 "user_email": data["email"],
                 "sidebar_dirs": sidebar_dirs,
                 "workspace_dirs": workspace_dirs,
+                "workspace_files": workspace_files,
                 "path": current_path,
                 "breadcrumbs": breadcrumbs,
             },
@@ -176,3 +239,4 @@ async def workspace_subdir(request: Request, folder_path: str):
         response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
         response.delete_cookie("token")
         return response
+

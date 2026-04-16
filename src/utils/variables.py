@@ -4,10 +4,15 @@ from src.logging import configure_logging
 import os
 
 load_dotenv()
+logger = configure_logging(log_level="info")
+
 
 
 mongodb_uri = os.getenv("MONGO_DB_URI", "")
 mongodb_dbname = os.getenv("MONGO_DB_NAME")
 
-firebase_api_key = os.getenv("FIREBASE_API_KEY")
-logger = configure_logging(log_level="info")
+firebase_api_key = os.getenv("FIREBASE_API_KEY", "")
+azure_connection_string = os.getenv("AZURE_CONNECTION_STRING", "")
+azure_blob_container_name = os.getenv("AZURE_BLOB_CONTAINER_NAME", "")
+
+

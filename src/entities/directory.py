@@ -1,20 +1,13 @@
 from pydantic import BaseModel
-from datetime import datetime
-from typing import Optional, Any
-
-
-
-class DirMetadata(BaseModel):
-    created: datetime
-    updated: Optional[datetime]
-    size: Optional[float] = 0
-    path: str
- 
-
+from typing import Optional
+from src.entities import Metadata, File
 
 class Dir(BaseModel): 
     id: str 
     name: str 
-    meta: DirMetadata
-    data: Optional[list[dict]] = None
+    meta: Metadata
+    data: Optional[list[File | None]] = None
 
+
+
+    

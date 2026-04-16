@@ -16,3 +16,4 @@ def get_parent_path(dir_path: str) -> str:
     parts = dir_path.rsplit("/", 1)
     # parts[0] is empty string for root-level paths like '/docs'
     return parts[0] if len(parts) == 2 and parts[0] else "/"
+
