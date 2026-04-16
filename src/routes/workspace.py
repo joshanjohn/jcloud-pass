@@ -42,7 +42,6 @@ async def workspace(request: Request):
 
         sys_service = SystemService(user=current_user)
         current_user = sys_service.get_user()
-        logger.info(f"UPDATED USER: {current_user.model_dump()}")
         
         # display available dir in root dir 
         sidebar_dirs = sys_service.get_dirs_in_path("/")
@@ -92,22 +91,20 @@ async def create_directory(
 
     name, error = valid_dir_name(name)
     redirect_url = f"/workspace{path if path != '/' else ''}"
-
     if error:
         return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(error['message'])}", status_code=status.HTTP_303_SEE_OTHER)
 
     try:
         current_user = User(id=data["user_id"] , email=data["email"])
         sys_service = SystemService(user=current_user)
-        current_user = sys_service.get_current_user()
+        current_user = sys_service.get_user()
         
-        dir_service = DirectoryService(user=current_user)
 
         # Build the full path: root stays "/", nested appends "/name"
         clean_path = path.rstrip("/") if path != "/" else ""
         full_path = f"{clean_path}/{name}"
 
-        success = dir_service.create_dir(name, full_path)
+        success = sys_service.create_dir(name, full_path)
         
         if success:
             return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
@@ -117,6 +114,7 @@ async def create_directory(
     except Exception as e:
         logger.error(f"Error creating directory: {str(e)}")
         return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(str(e))}", status_code=status.HTTP_303_SEE_OTHER)
+
 
 
 
@@ -143,12 +141,12 @@ async def upload_file(
     try:
         current_user = User(id=data["user_id"] , email=data["email"])
         sys_service = SystemService(user=current_user)
-        current_user = sys_service.get_current_user()
+        current_user = sys_service.get_user()
         
-        dir_service = DirectoryService(user=current_user)
 
         # Build the full path
         clean_path = path.strip("/")
+        logger.info(f"CLEAN PATH: {clean_path}")
         if clean_path:
             full_path = f"{clean_path}/{file.filename}"
         else:
@@ -158,7 +156,7 @@ async def upload_file(
         file_data = await file.read()
 
         # Upload the file
-        success = dir_service.storage_service.upload_file(full_path, file_data)
+        success = sys_service.storage_service.upload_file(full_path, file_data)
         
         if success:
             return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
@@ -168,6 +166,8 @@ async def upload_file(
     except Exception as e:
         logger.error(f"Error uploading file: {str(e)}")
         return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(str(e))}", status_code=status.HTTP_303_SEE_OTHER)
+
+
 
 @router.get("/workspace/{folder_path:path}", response_class=HTMLResponse)
 async def workspace_subdir(request: Request, folder_path: str):
@@ -191,15 +191,13 @@ async def workspace_subdir(request: Request, folder_path: str):
         )
 
         sys_service = SystemService(user=current_user)
-        current_user = sys_service.get_current_user()
-        
-        dir_service = DirectoryService(user=current_user)
+        current_user = sys_service.get_user()
         
         # Normalise to an absolute path: /docs/projects
         current_path = "/" + folder_path.strip("/")
 
         # Validate the path exists as a stored directory
-        all_dirs = dir_service.get_all_dir()
+        all_dirs = sys_service.get_all_dir()
         all_paths = {
             d.get("meta", {}).get("path", "")
             for d in (all_dirs or {}).get("directory", [])
@@ -208,12 +206,12 @@ async def workspace_subdir(request: Request, folder_path: str):
             return RedirectResponse(url="/workspace", status_code=status.HTTP_303_SEE_OTHER)
 
         # Sidebar always shows root-level dirs
-        sidebar_dirs = dir_service.get_dirs_in_path("/")
+        sidebar_dirs = sys_service.get_dirs_in_path(current_path)
         # Main grid shows immediate children of current path
-        workspace_dirs = dir_service.get_dirs_in_path(current_path)
+        workspace_dirs = sys_service.get_dirs_in_path(current_path)
         
         # Fetch blobs associated with current_path using list_dirs
-        workspace_files = dir_service.storage_service.list_dirs(current_path)
+        workspace_files = sys_service.storage_service.list_dirs(current_path)
 
         # Build breadcrumbs: [{name, url}, ...]
         segments = [s for s in folder_path.split("/") if s]

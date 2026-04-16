@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional
 from src.database.core.mongodb_connection import MongoConnection
 from src.utils import logger, get_username_from_email
-from src.entities.user import User
+from src.entities import File, User
 from src.factory.metadata_provider import MetadataProvider
 
 
@@ -33,6 +33,8 @@ class MongoMetadataService(MetadataProvider):
         else: 
             self.user.name = user_record["name"]
 
+    def create_file_record(self, file: File): 
+        pass
 
     def get_user_record(self, user_id: str) -> Optional[Dict[str, Any]]:
         return self.users_col.find_one({"id": user_id})
