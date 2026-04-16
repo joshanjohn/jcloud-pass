@@ -29,13 +29,19 @@ class MongoConnection:
 
 
     def get_users_collection(self) -> Collection: 
+        if hasattr(self, '_users_coll_cache') and self._users_coll_cache is not None:
+            return self._users_coll_cache
+
         db_list = self.client.list_database_names()
         if mongodb_dbname not in db_list:  
             logger.info("Creating mongodb system's db")  
             db =  self.client[mongodb_dbname]
             db.create_collection("users")
+            self._users_coll_cache = db
             return db
-        return self.client[mongodb_dbname]["users"]
+            
+        self._users_coll_cache = self.client[mongodb_dbname]["users"]
+        return self._users_coll_cache
         
 
 

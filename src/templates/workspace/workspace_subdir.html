@@ -131,10 +131,14 @@
                     <i data-lucide="folder-plus" class="w-4 h-4"></i>
                     Folder
                 </button>
-                <button class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors">
-                    <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-                    Upload Files
-                </button>
+                <form action="/workspace/upload" method="POST" enctype="multipart/form-data" class="m-0 relative">
+                    <input type="hidden" name="path" value="{{ path }}">
+                    <input type="file" name="file" id="file-upload-header" class="hidden" onchange="this.form.submit()">
+                    <button type="button" onclick="document.getElementById('file-upload-header').click()" class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors">
+                        <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                        Upload Files
+                    </button>
+                </form>
             </div>
         </header>
 
@@ -142,31 +146,53 @@
 
         <!-- Folder Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {% if workspace_dirs and workspace_dirs.directory %}
-                {% for folder in workspace_dirs.directory %}
-                <a href="/workspace{{ folder.meta.path }}" class="folder-card group">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-black transition-colors">
-                            <i data-lucide="folder" class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors"></i>
+            {% if (workspace_dirs and workspace_dirs.directory) or workspace_files %}
+                {% if workspace_dirs and workspace_dirs.directory %}
+                    {% for folder in workspace_dirs.directory %}
+                    <a href="/workspace{{ folder.meta.path }}" class="folder-card group">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-black transition-colors">
+                                <i data-lucide="folder" class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors"></i>
+                            </div>
+                            <button class="text-gray-400 hover:text-black" onclick="event.preventDefault()">
+                                <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                            </button>
                         </div>
-                        <button class="text-gray-400 hover:text-black" onclick="event.preventDefault()">
-                            <i data-lucide="more-vertical" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900 truncate">{{ folder.name }}</h3>
-                        <p class="text-xs text-gray-500 mt-1">Directory</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ folder.meta.updated }}</p>
-                    </div>
-                </a>
-                {% endfor %}
+                        <div>
+                            <h3 class="font-semibold text-gray-900 truncate">{{ folder.name }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Directory</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ folder.meta.updated }}</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if workspace_files %}
+                    {% for file in workspace_files %}
+                    <a href="#" class="folder-card group">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                                <i data-lucide="file" class="w-6 h-6 text-blue-400 group-hover:text-white transition-colors"></i>
+                            </div>
+                            <button class="text-gray-400 hover:text-black" onclick="event.preventDefault()">
+                                <i data-lucide="download" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 truncate">{{ file.name }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">File • {{ (file.size / 1024)|int }} KB</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ file.last_modified.strftime('%Y-%m-%d %H:%M') if file.last_modified else '' }}</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                {% endif %}
             {% else %}
                 <div class="col-span-full py-12 flex flex-col items-center justify-center border-2 border-dashed border-gray-100 rounded-2xl">
                     <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                         <i data-lucide="folder-plus" class="w-8 h-8 text-gray-300"></i>
                     </div>
                     <p class="text-gray-500 font-medium">This folder is empty</p>
-                    <p class="text-xs text-gray-400 mt-1">Create a new folder to get started</p>
+                    <p class="text-xs text-gray-400 mt-1">Create a new folder or upload files to get started</p>
                 </div>
             {% endif %}
         </div>
@@ -178,7 +204,7 @@
                     <form action="/workspace/create_directory" method="POST">
                         <div class="modal-header">
                             <span id="modal-title">New Folder</span>
-                            <button type="button" class="modal-close" id="modal-close-btn" aria-label="Close">&#x2715;</button>
+                            <button type="button" class="modal-close" id="create-folder-modal-close-btn" aria-label="Close">&#x2715;</button>
                         </div>
 
                         <div class="modal-body">
@@ -198,7 +224,7 @@
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btn-secondary" id="modal-cancel-btn">Cancel</button>
+                            <button type="button" class="btn-secondary" id="create-folder-modal-cancel-btn">Cancel</button>
                             <button type="submit" class="btn-primary" id="modal-confirm-btn">
                                 <span id="btn-label">Create</span>
                             </button>

@@ -1,19 +1,27 @@
 import uuid
 from datetime import datetime
-from pymongo.collection import Collection
 
 from src.utils import logger, get_parent_path
 from src.entities.user import User
 from src.entities.directory import Dir, DirMetadata
-
+from src.services.mongodb_metadata_service import MongoMetadataService
+from src.services.azure_storage_service import AzureStorageService
 
 class DirectoryService:
-    # Properties inherited from SystemService
-    user: User
-    users_col: Collection
+    def __init__(self, user: User):
+        self.user = user
+    
+        self.metadata_service = MongoMetadataService(user=user)
+        self.storage_service = AzureStorageService(user_id=user.id)
+    
+    def get_user(self): 
+        logger.info(f"UPDATED USER (from dict service) : {self.user.model_dump()}")
+        return self.user
 
     def create_dir(self, name: str, dir_path: str) -> bool: 
         parent_path = get_parent_path(dir_path)
+        logger.info(f"PARENT PATH={parent_path}")
+        
         existing_dirs = self.get_dirs_in_path(parent_path)
         
         # Check for duplicates in the target parent path
@@ -41,14 +49,14 @@ class DirectoryService:
             data=[]
         )
         
-        # Update MongoDB
+        # Update via MetadataService
         try:
-            self.users_col.update_one(
-                {"id": self.user.id},
-                {"$push": {"directory": new_dir.model_dump()}}
-            )
-            logger.info(f"Directory '{name}' created for user {self.user.name}")
-            return True
+            success = self.metadata_service.add_directory(self.user.id, new_dir.model_dump())
+            if success:
+                logger.info(f"Directory '{name}' created for user {self.user.name}")
+                return True
+            else:
+                return False
         except Exception as e:
             logger.error(f"Failed to create directory '{name}' for user {self.user.name}: {str(e)}")
             return False
@@ -57,18 +65,12 @@ class DirectoryService:
         pass
 
     def get_all_dir(self): 
-        doc = self.users_col.find_one(
-            {"id": self.user.id},
-            {"directory": 1, "_id": 0}
-        )
+        doc = self.metadata_service.get_all_directories(self.user.id)
         return doc
     
     def get_dirs_in_path(self, path: str):
         """Returns directories whose immediate parent is the given path."""
-        doc = self.users_col.find_one(
-            {"id": self.user.id},
-            {"directory": 1, "_id": 0}
-        )
+        doc = self.metadata_service.get_all_directories(self.user.id)
         if not doc or "directory" not in doc:
             return {"directory": []}
 

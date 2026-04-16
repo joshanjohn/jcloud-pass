@@ -9,11 +9,11 @@ function initCreateFolder() {
     const modal = document.getElementById("create-folder-modal");
     if (!btn || !modal) return;
 
-    const closeBtn = document.getElementById("modal-close-btn");
-    const cancelBtn = document.getElementById("modal-cancel-btn");
+    const closeBtn = document.getElementById("create-folder-modal-close-btn");
+    const cancelBtn = document.getElementById("create-folder-modal-cancel-btn");
     const backdrop = document.getElementById("modal-backdrop");
     const input = document.getElementById("folder-name-input");
-    const confirmBtn = document.getElementById("modal-confirm-btn");
+    const confirmBtn = document.getElementById("create-folder-modal-confirm-btn");
     const btnLabel = document.getElementById("btn-label");
 
     const form = modal.querySelector('form');
