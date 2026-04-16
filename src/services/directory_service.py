@@ -3,7 +3,7 @@ from datetime import datetime
 
 from src.utils import logger, get_parent_path
 from src.entities.user import User
-from src.entities.directory import Dir, DirMetadata
+from src.entities.directory import Dir, Metadata
 from src.services.mongodb_metadata_service import MongoMetadataService
 from src.services.azure_storage_service import AzureStorageService
 
@@ -15,13 +15,12 @@ class DirectoryService:
         self.storage_service = AzureStorageService(user_id=user.id)
     
     def get_user(self): 
-        logger.info(f"UPDATED USER (from dict service) : {self.user.model_dump()}")
         return self.user
 
     def create_dir(self, name: str, dir_path: str) -> bool: 
         parent_path = get_parent_path(dir_path)
         logger.info(f"PARENT PATH={parent_path}")
-        
+
         existing_dirs = self.get_dirs_in_path(parent_path)
         
         # Check for duplicates in the target parent path
@@ -31,7 +30,7 @@ class DirectoryService:
 
         # Create metadata
         timestamp = datetime.now()
-        meta = DirMetadata(
+        meta = Metadata(
             size = 0,
             created=timestamp,
             updated=timestamp,
