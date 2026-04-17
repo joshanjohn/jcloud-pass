@@ -8,7 +8,7 @@ import urllib.parse
 from src.services.system_service import SystemService
 from src.services.directory_service import DirectoryService
 from src.utils import logger, token_validation, valid_dir_name
-from src.entities.user import User
+from src.entities import User
 
 router = APIRouter()
 
@@ -144,19 +144,17 @@ async def upload_file(
         current_user = sys_service.get_user()
         
 
-        # Build the full path
-        clean_path = path.strip("/")
-        logger.info(f"CLEAN PATH: {clean_path}")
-        if clean_path:
-            full_path = f"{clean_path}/{file.filename}"
-        else:
-            full_path = file.filename
+       
         
-        # Read the file contents
+        # # Read the file contents
         file_data = await file.read()
 
         # Upload the file
-        success = sys_service.storage_service.upload_file(full_path, file_data)
+        success = sys_service.upload_file(
+            file=file, 
+            data=file_data,
+            path=path
+        )
         
         if success:
             return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)

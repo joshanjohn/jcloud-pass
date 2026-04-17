@@ -20,7 +20,7 @@ class MetadataProvider(ABC):
         pass
 
     @abstractmethod
-    def add_file_record(self, user_id: str, file: File) -> bool: 
+    def create_file_record(self, user_id: str, file: File) -> None: 
         pass
 
 
