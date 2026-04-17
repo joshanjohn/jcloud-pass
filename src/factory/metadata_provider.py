@@ -20,7 +20,15 @@ class MetadataProvider(ABC):
         pass
 
     @abstractmethod
-    def create_file_record(self, user_id: str, file: File) -> None: 
+    def create_file_record(self, user_id: str, file: File, path: str) -> None: 
+        pass
+
+    @abstractmethod
+    def delete_directory(self, user_id: str, dir_path: str) -> bool:
+        pass
+
+    @abstractmethod
+    def delete_file_record(self, user_id: str, file_name: str, path: str) -> bool:
         pass
 
 
