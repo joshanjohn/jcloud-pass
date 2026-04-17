@@ -33,9 +33,6 @@ class MongoMetadataService(MetadataProvider):
         else: 
             self.user.name = user_record["name"]
 
-    def create_file_record(self, file: File): 
-        pass
-
     def get_user_record(self, user_id: str) -> Optional[Dict[str, Any]]:
         return self.users_col.find_one({"id": user_id})
 
@@ -58,3 +55,24 @@ class MongoMetadataService(MetadataProvider):
             {"id": user_id},
             {"directory": 1, "_id": 0}
         )
+
+    def create_file_record(self, user_id: str, file: File, path: str) -> None: 
+        self.users_col.update_one(
+            {   
+                "id": user_id, 
+                "directory.meta.path": path
+            }, 
+            {
+                "$push": {
+                    "directory.$.data": file.model_dump()
+                },
+                # updating folder metadata
+                "$set": {
+                    "directory.$.meta.updated": file.meta.updated, 
+                    "directory.$.meta.size": file.meta.size, 
+                }
+            }
+        )
+        
+
+            

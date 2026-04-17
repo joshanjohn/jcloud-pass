@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime
+from fastapi import UploadFile
 
 from src.utils import logger, get_parent_path
-from src.entities.user import User
-from src.entities.directory import Dir, Metadata
+from src.entities import Dir, Metadata, User, File
 from src.services.mongodb_metadata_service import MongoMetadataService
 from src.services.azure_storage_service import AzureStorageService
 
@@ -78,6 +78,49 @@ class DirectoryService:
             if get_parent_path(d.get("meta", {}).get("path", "")) == path
         ]
         return {"directory": children}
+
+    def upload_file(self, file: UploadFile, data: bytes, path: str) -> bool: 
+
+
+        # Build the full path
+        clean_path = path.strip("/")
+        logger.info(f"CLEAN PATH: {clean_path}")
+        logger.info(f"PATH: {path}")
+
+        full_path = ""
+        if clean_path:
+            full_path = f"{clean_path}/{file.filename}"
+        else:
+            full_path = file.filename
+        pass
+        
+        timestamp = datetime.now()
+        
+
+        meta = Metadata(
+            size = file.size,
+            created=timestamp,
+            updated=timestamp,
+            path=full_path
+        )
+
+        file: File = File(
+            id=str(uuid.uuid4()),
+            name=file.filename,
+            meta=meta
+        )
+
+        try: 
+            self.metadata_service.create_file_record(user_id=self.user.id, file=file, path=path)
+            self.storage_service.upload_file(blob_name=full_path, file_data=data)
+           
+            return True
+        except Exception as e: 
+            return True 
+        
+
+
+
 
     def rename_dir(self, name: str): 
         pass
