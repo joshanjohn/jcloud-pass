@@ -19,7 +19,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <script type="module" src="{{ url_for('static', path='js/workspace.js') }}"></script>
+
   
 </head>
 <body class="bg-[#f9fafb]">
@@ -99,7 +99,7 @@
                         <span class="text-xs text-gray-500">{{ user_email }}</span>
                     </div>
                 </div>
-                <button id="sign-out" title="Sign Out">
+                <button id="sign-out" title="Sign Out" onclick="handleLogout()">
                     <i data-lucide="log-out" class="w-4 h-4 text-gray-400 hover:text-red-500 transition-colors"></i>
                 </button>
             </div>
@@ -134,8 +134,8 @@
                 </div>
                 <form action="/workspace/upload" method="POST" enctype="multipart/form-data" class="m-0 relative">
                     <input type="hidden" name="path" value="{{ path }}">
-                    <input type="file" name="file" id="file-upload-header" class="hidden" data-auto-submit="true">
-                    <button type="button" data-trigger-upload="file-upload-header"
+                    <input type="file" name="file" id="file-upload-header" class="opacity-0 absolute w-0 h-0 pointer-events-none" onchange="handleFileChange(this)">
+                    <button type="button" onclick="handleUploadTrigger('file-upload-header')"
                         class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-gray-800 transition-colors">
                         <i data-lucide="upload-cloud" class="w-4 h-4"></i>
                         Upload Files
@@ -151,8 +151,8 @@
             <!-- Upload Button -->
             <form action="/workspace/upload" method="POST" enctype="multipart/form-data" class="h-32 m-0 relative">
                 <input type="hidden" name="path" value="{{ path }}">
-                <input type="file" name="file" id="file-upload" class="hidden" data-auto-submit="true">
-                <button type="button" data-trigger-upload="file-upload"
+                <input type="file" name="file" id="file-upload" class="opacity-0 absolute w-0 h-0 pointer-events-none" onchange="handleFileChange(this)">
+                <button type="button" onclick="handleUploadTrigger('file-upload')"
                     class="border-2 border-dashed border-gray-200 bg-white p-6 rounded-[22px] flex flex-col items-start justify-between h-full w-full hover:border-black transition-all text-left group">
                     <i data-lucide="upload"
                         class="w-6 h-6 text-gray-900 group-hover:-translate-y-1 transition-transform"></i>
@@ -330,10 +330,12 @@
         </div>
 
     </main>
+
+
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
     </script>
+    <script src="{{ url_for('static', path='js/workspace.js') }}"></script>
 </body>
-
 </html>
