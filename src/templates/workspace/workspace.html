@@ -45,7 +45,7 @@
                 <div class="nav-item justify-between">
                     <div class="flex items-center gap-3">
                         <i data-lucide="cloud" class="w-5 h-5"></i>
-                        <span>Cloud Storage</span>
+                        <span>Folders</span>
                     </div>
                     <i data-lucide="chevron-up" class="w-4 h-4"></i>
                 </div>
@@ -54,10 +54,12 @@
                 {% if sidebar_dirs and sidebar_dirs.directory %}
                 <div class="nested-list">
                     {% for folder in sidebar_dirs.directory %}
+                     {% if folder.name != "root" %}
                     <a href="/workspace{{ folder.meta.path }}" class="nested-item">
                         <i data-lucide="folder" class="w-4 h-4 text-gray-400"></i>
                         <span>{{ folder.name }}</span>
                     </a>
+                    {% endif %}
                     {% endfor %}
                 </div>
                 {% endif %}

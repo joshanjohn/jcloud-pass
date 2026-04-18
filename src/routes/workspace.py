@@ -59,7 +59,7 @@ async def workspace(request: Request, folder_path: str = ""):
 
         # Sidebar always shows root-level dirs (or current context, depending on preference)
         # Here we follow existing logic: it shows items in the current path
-        sidebar_dirs = sys_service.get_dirs_in_path("/")
+        # sidebar_dirs = sys_service.get_dirs_in_path(current_path)
         workspace_dirs = sys_service.get_dirs_in_path(current_path)
         
         # Fetch blobs and metadata associated with current_path
@@ -78,7 +78,7 @@ async def workspace(request: Request, folder_path: str = ""):
             context={
                 "username": sys_service.get_user().name,
                 "user_email": data["email"], 
-                "sidebar_dirs": sidebar_dirs,
+                "sidebar_dirs": workspace_dirs,
                 "workspace_dirs": workspace_dirs,
                 "workspace_files": workspace_files,
                 "path": current_path,
