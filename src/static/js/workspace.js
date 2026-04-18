@@ -100,6 +100,7 @@ window.handleLogout = function() {
         if (!confirm(`Are you sure you want to delete this ${type}: "${name}"?`)) {
             return;
         }
+        console.log("FILE:"+id)
 
         if (!id && type === 'file') {
             console.error("Delete aborted: File ID is missing.");

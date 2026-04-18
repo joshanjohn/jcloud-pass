@@ -35,14 +35,16 @@ class MongoMetadataService(MetadataProvider):
             user_data["directory"] = [
                 {
                     "id": str(uuid.uuid4()),
-                    "name": "Root",
+                    "name": "root",
                     "meta": {
                         "size": 0,
                         "created": timestamp,
                         "updated": timestamp,
                         "path": "/"
                     },
-                    "data": []
+                    "data": [
+
+                    ]
                 }
             ]
 
