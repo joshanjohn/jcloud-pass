@@ -1,4 +1,8 @@
 from typing import Dict, Any, Optional
+import re
+import uuid
+from datetime import datetime
+
 from src.database.core.mongodb_connection import MongoConnection
 from src.utils import logger, get_username_from_email
 from src.entities import File, User
@@ -19,13 +23,28 @@ class MongoMetadataService(MetadataProvider):
             logger.warning(f"No user metadata found. Initializing new user profile for {self.user.email}")
             
             # Extract username from email safely, default if None
-            if  self.user.email: 
+            if self.user.email: 
                 self.user.name = get_username_from_email(self.user.email)
             else: 
                 self.user.name = "Unknown User"
             
+            timestamp = datetime.now()
             user_data = self.user.model_dump()
-            user_data["directory"] = []
+            
+            # Initialize with a Root directory record to accommodate root-level files
+            user_data["directory"] = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Root",
+                    "meta": {
+                        "size": 0,
+                        "created": timestamp,
+                        "updated": timestamp,
+                        "path": "/"
+                    },
+                    "data": []
+                }
+            ]
 
             self.create_user(user_data=user_data)
             logger.info(f"Metadata user collection created for {self.user.email} - {self.user.id}")
@@ -73,6 +92,40 @@ class MongoMetadataService(MetadataProvider):
                 }
             }
         )
-        
 
-            
+    def remove_directory(self, user_id: str, dir_path: str) -> None:
+        try:
+            escaped_path = re.escape(dir_path)
+
+            result = self.users_col.delete_many({
+                "user_id": user_id,
+                "meta.path": {
+                    "$regex": f"^{escaped_path}(/|$)"
+                }
+            })
+
+            logger.info(f"Deleted {result.deleted_count} documents for path {dir_path}")
+
+            return True
+
+        except Exception as e:
+            logger.error(
+                f"Failed to remove directory {dir_path} for user {user_id}: {str(e)}"
+            )
+            return False
+
+    def remove_file_record(self, user_id: str, file_id: str) -> None:
+        try:
+            result = self.users_col.update_one(
+                {"id": self.user.id},
+                {"$pull": {"directory.$[].data": {"id": file_id}}}
+            )
+
+            if result.modified_count == 0:
+                logger.warning(f"File with id '{file_id}' not found via array filter, trying path fallback.")
+                
+        except Exception as e:
+            logger.error(
+                f"Failed to remove file record {file_id} for user {self.user.id}: {str(e)}"
+            )
+            raise

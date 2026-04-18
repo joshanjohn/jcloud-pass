@@ -6,9 +6,17 @@ class MetadataProvider(ABC):
     @abstractmethod
     def get_user_record(self, user_id: str) -> Optional[Dict[str, Any]]:
         pass
+   
+    @abstractmethod
+    def get_all_directories(self, user_id: str) -> Optional[Dict[str, Any]]:
+        pass
 
     @abstractmethod
     def create_user(self, user_data: Dict[str, Any]) -> None:
+        pass
+
+    @abstractmethod
+    def create_file_record(self, user_id: str, file: File, path: str) -> None: 
         pass
 
     @abstractmethod
@@ -16,11 +24,11 @@ class MetadataProvider(ABC):
         pass
 
     @abstractmethod
-    def get_all_directories(self, user_id: str) -> Optional[Dict[str, Any]]:
+    def remove_directory(self, user_id: str, dir_path: str) -> None:
         pass
 
     @abstractmethod
-    def create_file_record(self, user_id: str, file: File) -> None: 
+    def remove_file_record(self, user_id: str, file_name: str, path: str) -> None:
         pass
 
 

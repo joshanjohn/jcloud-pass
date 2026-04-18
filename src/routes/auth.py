@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
@@ -52,3 +52,12 @@ async def signup_page(request: Request):
         request=request, 
         name="auth/signup.html"
     )
+@router.get("/logout")
+async def logout():
+    """
+    Clear token cookie and redirect to landing page
+    """
+    logger.info("GET request for '/logout'")
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response.delete_cookie("token")
+    return response
