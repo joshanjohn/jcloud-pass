@@ -1,4 +1,6 @@
 from typing import Dict, Any, Optional
+import re
+
 from src.database.core.mongodb_connection import MongoConnection
 from src.utils import logger, get_username_from_email
 from src.entities import File, User
@@ -74,29 +76,46 @@ class MongoMetadataService(MetadataProvider):
             }
         )
 
-    def remove_directory(self, user_id: str, dir_path: str) -> bool:
+    def remove_directory(self, user_id: str, dir_path: str) -> None:
         try:
-            self.users_col.update_one(
-                {"id": user_id},
-                {"$pull": {"directory": {"meta.path": dir_path}}}
-            )
+            escaped_path = re.escape(dir_path)
+
+            result = self.users_col.delete_many({
+                "user_id": user_id,
+                "meta.path": {
+                    "$regex": f"^{escaped_path}(/|$)"
+                }
+            })
+
+            logger.info(f"Deleted {result.deleted_count} documents for path {dir_path}")
+
             return True
+
         except Exception as e:
-            logger.error(f"Failed to remove directory {dir_path} for user {user_id}: {str(e)}")
+            logger.error(
+                f"Failed to remove directory {dir_path} for user {user_id}: {str(e)}"
+            )
             return False
 
-    def remove_file_record(self, user_id: str, file_name: str, path: str) -> bool:
+    def remove_file_record(self, user_id: str, file_id: str) -> None:
         try:
-            self.users_col.update_one(
+            result = self.users_col.delete_one(
                 {
-                    "id": user_id,
-                    "directory.meta.path": path
-                },
-                {
-                    "$pull": {"directory.$.data": {"name": file_name}}
+                    "user_id": user_id,
+                    "id": file_id
                 }
             )
-            return True
+
+            if result.deleted_count == 0:
+                raise ValueError(
+                    f"File with id '{file_id}' not found for user '{user_id}'"
+                )
+
         except Exception as e:
-            logger.error(f"Failed to remove file record {file_name} from {path} for user {user_id}: {str(e)}")
-            return False
+            logger.error(
+                f"Failed to remove file record {file_id} for user {user_id}: {str(e)}"
+            )
+            raise
+
+
+        

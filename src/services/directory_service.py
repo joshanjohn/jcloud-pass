@@ -68,14 +68,14 @@ class DirectoryService:
             logger.error(f"Failed to delete directory {dir_path}: {str(e)}")
             return False
 
-    def delete_file(self, file_name: str, path: str, blob_name: str) -> bool:
-        logger.info(f"Deleting file {file_name} in {path}")
+    def delete_file(self, file_id: str,  blob_name: str) -> bool:
+        logger.info(f"Deleting file :{file_id}")
         try:
             # 1. Delete from Azure
             storage_success = self.storage_service.delete_file(blob_name)
             
             # 2. Delete metadata record
-            meta_success = self.metadata_service.remove_file_record(self.user.id, file_name, path)
+            meta_success = self.metadata_service.remove_file_record(self.user.id, file_id)
             
             return storage_success and meta_success
         except Exception as e:

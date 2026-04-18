@@ -140,7 +140,6 @@ async def workspace(request: Request, folder_path: str = ""):
     try:
         current_user = User(id=data["user_id"], email=data["email"])
         sys_service = SystemService(user=current_user)
-        current_user = sys_service.get_user()
         
         # Normalise to an absolute path: e.g., "/" or "/docs/projects"
         current_path = "/" + folder_path.strip("/") if folder_path else "/"
@@ -175,7 +174,7 @@ async def workspace(request: Request, folder_path: str = ""):
             request=request,
             name="workspace/workspace.html", 
             context={
-                "username": current_user.name,
+                "username": sys_service.get_user().name,
                 "user_email": data["email"], 
                 "sidebar_dirs": sidebar_dirs,
                 "workspace_dirs": workspace_dirs,
@@ -189,3 +188,43 @@ async def workspace(request: Request, folder_path: str = ""):
         response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
         response.delete_cookie("token")
         return response
+
+
+@router.delete("/workspace/")
+async def delete_file( 
+    request: Request,
+    file_id: str = Form(...),
+    full_path: str = Form("/")
+    ): 
+    """
+    Delete endpoint for file
+    """
+    logger.info(f"DELETE request for file")
+
+    id_token = request.cookies.get('token')
+    
+    validation_result = token_validation(id_token)
+    if isinstance(validation_result, RedirectResponse):
+        return validation_result
+    
+    data = validation_result
+
+    try:
+        current_user = User(id=data["user_id"], email=data["email"])
+        sys_service = SystemService(user=current_user)
+
+        sys_service.delete_file(file_id=file_id,
+                                blob_name=full_path # with name 
+                                )
+
+        
+    except Exception as e:
+        logger.error(f"Error on workspace delete file endpoint: {str(e)}")
+        response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+        response.delete_cookie("token")
+        return response
+    
+
+@router.delete("/workspace/")
+async def delete_dir( request: Request,): 
+    pass
