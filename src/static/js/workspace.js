@@ -117,9 +117,8 @@ window.handleLogout = function() {
     }
 
     function initCreateFolder() {
-        const btn = document.getElementById("create-folder-btn");
         const modal = document.getElementById("create-folder-modal");
-        if (!btn || !modal) return;
+        if (!modal) return;
 
         const closeBtn = document.getElementById("create-folder-modal-close-btn");
         const cancelBtn = document.getElementById("create-folder-modal-cancel-btn");
@@ -140,14 +139,21 @@ window.handleLogout = function() {
             modal.classList.add("hidden");
         };
 
-        btn.addEventListener("click", () => {
+        const openModal = () => {
             modal.classList.remove("hidden");
-            setTimeout(() => input.focus(), 50);
+            setTimeout(() => { if(input) input.focus(); }, 50);
+        };
+
+        // Delegate click for multiple Create Folder buttons
+        document.addEventListener("click", (e) => {
+            if (e.target.closest(".create-folder-btn")) {
+                openModal();
+            }
         });
 
-        closeBtn.addEventListener("click", closeModal);
-        cancelBtn.addEventListener("click", closeModal);
-        backdrop.addEventListener("click", (e) => {
+        if(closeBtn) closeBtn.addEventListener("click", closeModal);
+        if(cancelBtn) cancelBtn.addEventListener("click", closeModal);
+        if(backdrop) backdrop.addEventListener("click", (e) => {
             if (e.target === backdrop) closeModal();
         });
 

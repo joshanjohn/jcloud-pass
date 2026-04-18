@@ -131,12 +131,17 @@ body {
     background: white;
     border: 1px solid var(--border-color);
     border-radius: 1rem;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .file-list-header {
     background: #f9fafb;
+    border-radius: 1rem 1rem 0 0;
+}
+
+.file-row:last-child {
+    border-radius: 0 0 1rem 1rem;
 }
 
 .file-row {
