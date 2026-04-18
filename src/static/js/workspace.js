@@ -1,10 +1,4 @@
 
-/**
- * Workspace UI Logic
- * Handles folder creation, dropdowns, and file operations.
- */
-
-// Global access for layout triggers
 window.handleUploadTrigger = function(id) {
     const input = document.getElementById(id);
     if (input) {
@@ -90,21 +84,56 @@ window.handleLogout = function() {
             const name = actionBtn.dataset.name;
             const path = actionBtn.dataset.path;
             const type = actionBtn.dataset.type;
+            const id = actionBtn.dataset.id;
 
             if (action === 'rename') {
                 renameItem(name, path, type);
             } else if (action === 'delete') {
-                deleteItem(name, path, type);
+                deleteItem(name, path, type, id);
             } else if (action === 'open' && type === 'directory') {
                 window.location.href = path;
             }
         });
     }
 
-    function deleteItem(name, path, type) {
-        if (confirm(`Are you sure you want to delete this ${type}: "${name}"?`)) {
-            console.log(`Deleting ${type}: ${path}`);
-            alert("Delete functionality coming soon!");
+    async function deleteItem(name, path, type, id) {
+        if (!confirm(`Are you sure you want to delete this ${type}: "${name}"?`)) {
+            return;
+        }
+
+        if (!id && type === 'file') {
+            console.error("Delete aborted: File ID is missing.");
+            alert("Error: File ID not found. This file might not have a database record.");
+            return;
+        }
+
+        console.log(`Attempting delete for ${type}: ${path} (ID: ${id})`);
+        
+        if (type === 'file') {
+            const formData = new FormData();
+            formData.append('file_id', id);
+            formData.append('full_path', path);
+
+            try {
+                const response = await fetch('/workspace/file/', {
+                    method: 'DELETE',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const errorJson = await response.json().catch(() => ({}));
+                    console.error("Delete failed status:", response.status, errorJson);
+                    const detail = errorJson.detail ? JSON.stringify(errorJson.detail) : "Unknown error";
+                    alert(`Deletion Failed (${response.status}): ${detail}`);
+                }
+            } catch (err) {
+                console.error("Fetch error:", err);
+                alert("Network error. Check connection.");
+            }
+        } else {
+            alert("Directory deletion not yet implemented.");
         }
     }
 

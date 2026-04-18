@@ -69,12 +69,11 @@ class DirectoryService:
             return False
 
     def delete_file(self, file_id: str,  blob_name: str) -> bool:
-        logger.info(f"Deleting file :{file_id}")
+        logger.info(f"Deleting file id:{file_id} ;blob name: {blob_name}")
+        blob_name
         try:
-            # 1. Delete from Azure
             storage_success = self.storage_service.delete_file(blob_name)
             
-            # 2. Delete metadata record
             meta_success = self.metadata_service.remove_file_record(self.user.id, file_id)
             
             return storage_success and meta_success
@@ -98,8 +97,9 @@ class DirectoryService:
         ]
         return {"directory": children}
 
-    def upload_file(self, file: UploadFile, data: bytes, path: str) -> bool: 
 
+
+    def upload_file(self, file: UploadFile, data: bytes, path: str) -> bool: 
 
         # Build the full path
         clean_path = path.strip("/")
@@ -139,7 +139,32 @@ class DirectoryService:
         
 
 
+    def get_files_in_path(self, path: str):
+        blobs = self.storage_service.list_dirs(path)
+        
+        # Get metadata from MongoDB for IDs
+        doc = self.metadata_service.get_all_directories(self.user.id)
+        if not doc or "directory" not in doc:
+            logger.warning(f"No directory metadata found for user {self.user.id}")
+            return blobs
+            
+        # Standardize path for matching
+        lookup_path = path if path.startswith("/") else "/" + path
+        if not lookup_path.endswith("/") and lookup_path != "/":
+            pass # Keep as is
 
-
-    def rename_dir(self, name: str): 
-        pass
+        folder_meta = next((d for d in doc["directory"] if d.get("meta", {}).get("path") == lookup_path), None)
+        
+        if not folder_meta or "data" not in folder_meta:
+            logger.debug(f"No metadata entry for path: {lookup_path}")
+            return blobs
+            
+        # Merge IDs into blobs
+        id_map = { f["name"]: f["id"] for f in folder_meta["data"] if "name" in f and "id" in f }
+        
+        for b in blobs:
+            b["id"] = id_map.get(b["name"], "")
+            if not b["id"]:
+                logger.warning(f"File {b['name']} in storage has no matching metadata ID in DB.")
+            
+        return blobs

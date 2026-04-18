@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, status, Form, File, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from google.auth.transport import requests
 from pathlib import Path
@@ -160,8 +160,8 @@ async def workspace(request: Request, folder_path: str = ""):
         sidebar_dirs = sys_service.get_dirs_in_path("/")
         workspace_dirs = sys_service.get_dirs_in_path(current_path)
         
-        # Fetch blobs associated with current_path
-        workspace_files = sys_service.storage_service.list_dirs(current_path)
+        # Fetch blobs and metadata associated with current_path
+        workspace_files = sys_service.get_files_in_path(current_path)
 
         # Build dynamic breadcrumbs
         segments = [s for s in folder_path.split("/") if s]
@@ -190,7 +190,7 @@ async def workspace(request: Request, folder_path: str = ""):
         return response
 
 
-@router.delete("/workspace/")
+@router.delete("/workspace/file/")
 async def delete_file( 
     request: Request,
     file_id: str = Form(...),
@@ -199,7 +199,7 @@ async def delete_file(
     """
     Delete endpoint for file
     """
-    logger.info(f"DELETE request for file")
+    logger.info(f"DELETE request for file :{file_id} - {full_path}")
 
     id_token = request.cookies.get('token')
     
@@ -217,12 +217,15 @@ async def delete_file(
                                 blob_name=full_path # with name 
                                 )
 
+        return {"status": "success", "message": "File deleted successfully"}
+
         
     except Exception as e:
         logger.error(f"Error on workspace delete file endpoint: {str(e)}")
-        response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-        response.delete_cookie("token")
-        return response
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": f"Error deleting file: {str(e)}"}
+        )
     
 
 @router.delete("/workspace/")

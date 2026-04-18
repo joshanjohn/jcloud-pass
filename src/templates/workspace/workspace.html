@@ -274,7 +274,8 @@
                                 </button>
                                 <button class="dropdown-item text-red-600" data-action="delete"
                                     data-name="{{ file.name }}"
-                                    data-path="{{ (path + '/' + file.name) if path != '/' else file.name }}"
+                                    data-id="{{ file.id if file.id else '' }}"
+                                    data-path="{{ path.strip('/') + '/' + file.name }}"
                                     data-type="file">
                                     <i data-lucide="trash-2"></i>
                                     Delete
