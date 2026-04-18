@@ -125,6 +125,91 @@ body {
     transform: translateY(-2px);
 }
 
+/* ── File List View ────────────────────────────────────────────── */
+
+.file-list-container {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.file-list-header {
+    background: #f9fafb;
+}
+
+.file-row {
+    cursor: pointer;
+}
+
+.file-row:hover {
+    background-color: #f9fafb;
+}
+
+/* ── Dropdowns ─────────────────────────────────────────────────── */
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    background-color: #ffffff;
+    min-width: 160px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    z-index: 100;
+    padding: 6px;
+    animation: dropdownFade 0.15s ease-out;
+}
+
+@keyframes dropdownFade {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+.dropdown-item {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.dropdown-item:hover {
+    background-color: #f3f4f6;
+}
+
+.dropdown-item i {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+}
+
+.dropdown-item.text-red-600 i {
+    color: #ef4444;
+}
+
 /* ── Modal ───────────────────────────────────────────────────────── */
 
 .modal-backdrop {

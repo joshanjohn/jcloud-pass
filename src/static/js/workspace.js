@@ -1,8 +1,115 @@
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Initialize Lucide Icons
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+
     initCreateFolder();
     checkErrors();
+    initDropdowns();
+    initActionHandlers();
+    initUploadHandlers();
 });
+
+/**
+ * Handle Dropdown logic using event delegation
+ */
+function initDropdowns() {
+    // Toggle dropdown on click
+    document.addEventListener("click", (e) => {
+        const toggle = e.target.closest('.dropdown-toggle');
+        if (toggle) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const dropdown = toggle.closest('.dropdown');
+            const content = dropdown.querySelector('.dropdown-content');
+            
+            // Close other open dropdowns
+            document.querySelectorAll('.dropdown-content.show').forEach(d => {
+                if (d !== content) d.classList.remove('show');
+            });
+
+            content.classList.toggle('show');
+            return;
+        }
+
+        // Close dropdowns when clicking outside
+        if (!e.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown-content.show').forEach(d => {
+                d.classList.remove('show');
+            });
+        }
+    });
+
+    // Close on escape
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            document.querySelectorAll('.dropdown-content.show').forEach(d => {
+                d.classList.remove('show');
+            });
+        }
+    });
+}
+
+/**
+ * Handle Item Actions (Rename, Delete) using event delegation
+ */
+function initActionHandlers() {
+    document.addEventListener("click", (e) => {
+        const actionBtn = e.target.closest('[data-action]');
+        if (!actionBtn) return;
+
+        const action = actionBtn.dataset.action;
+        const name = actionBtn.dataset.name;
+        const path = actionBtn.dataset.path;
+        const type = actionBtn.dataset.type;
+
+        if (action === 'rename') {
+            renameItem(name, path, type);
+        } else if (action === 'delete') {
+            deleteItem(name, path, type);
+        }
+    });
+}
+
+/**
+ * Handle File Upload triggers
+ */
+function initUploadHandlers() {
+    document.addEventListener("change", (e) => {
+        if (e.target.matches('input[type="file"][data-auto-submit="true"]')) {
+            e.target.form.submit();
+        }
+    });
+
+    document.addEventListener("click", (e) => {
+        const trigger = e.target.closest('[data-trigger-upload]');
+        if (trigger) {
+            const inputId = trigger.dataset.triggerUpload;
+            const input = document.getElementById(inputId);
+            if (input) input.click();
+        }
+    });
+}
+
+function deleteItem(name, path, type) {
+    if (confirm(`Are you sure you want to delete this ${type}: "${name}"?`)) {
+        console.log(`Deleting ${type}: ${path}`);
+        // To be implemented: better backend integration
+        alert("Delete functionality coming soon!");
+    }
+}
+
+function renameItem(name, path, type) {
+    const newName = prompt(`Enter new name for ${type}:`, name);
+    if (newName && newName !== name) {
+        console.log(`Renaming ${type} from ${name} to ${newName} at ${path}`);
+        // To be implemented: better backend integration
+        alert("Rename functionality coming soon!");
+    }
+}
 
 function initCreateFolder() {
     const btn = document.getElementById("create-folder-btn");
@@ -36,19 +143,16 @@ function initCreateFolder() {
     closeBtn.addEventListener("click", closeModal);
     cancelBtn.addEventListener("click", closeModal);
 
-    // Clicking backdrop closes modal
     backdrop.addEventListener("click", (e) => {
         if (e.target === backdrop) closeModal();
     });
 
-    // Escape key closes modal
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && !modal.classList.contains("hidden")) {
             closeModal();
         }
     });
 
-    // Clear error locally if user types again
     const errorEl = document.getElementById("modal-error");
     if (errorEl && input) {
         input.addEventListener("input", () => {
@@ -59,7 +163,6 @@ function initCreateFolder() {
 }
 
 function checkErrors() {
-    // If the server redirected back with an ?error= message, 
     const urlParams = new URLSearchParams(window.location.search);
     const errorMsg = urlParams.get('error');
     if (errorMsg) {
@@ -76,10 +179,8 @@ function checkErrors() {
                 input.classList.add("input-error");
             }
 
-            // Clean exactly the ?error parameter from the URL to avoid reopening after a refresh
             const url = new URL(window.location);
             url.searchParams.delete('error');
-            // This replaces the URL without reloading the page
             window.history.replaceState({}, '', url);
         }
     }

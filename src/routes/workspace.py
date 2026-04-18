@@ -20,54 +20,7 @@ firebase_request_adapter = requests.Request()
 
 current_user = None
 
-@router.get("/workspace", response_class=HTMLResponse)
-async def workspace(request: Request):
-    """
-    Render workspace page
-    """
-    logger.info("GET request for '/workspace'")
 
-    # getting token from cookies 
-    id_token = request.cookies.get('token')
-
-    # token validation 
-    validation_result = token_validation(id_token)
-    if isinstance(validation_result, RedirectResponse): # handling redirect 
-        return validation_result
-    
-    data = validation_result
-    
-    try:
-        current_user = User(id=data["user_id"] , email=data["email"])
-
-        sys_service = SystemService(user=current_user)
-        current_user = sys_service.get_user()
-        
-        # display available dir in root dir 
-        sidebar_dirs = sys_service.get_dirs_in_path("/")
-        workspace_dirs  = sidebar_dirs  # root view shows root-level dirs
-        
-        # Display files via Azure Storage using list_dirs
-        workspace_files = sys_service.storage_service.list_dirs("/")
-
-        return templates.TemplateResponse(
-            request=request,
-            name="workspace/workspace.html", 
-            context={
-                "username": current_user.name,
-                "user_email": data["email"], 
-                "sidebar_dirs": sidebar_dirs,
-                "workspace_dirs": workspace_dirs,
-                "workspace_files": workspace_files,
-                "path": "/",
-                "breadcrumbs": [],
-            }
-        )
-    except Exception as e:
-        logger.error(f"Error in workspace route: {str(e)}")
-        response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-        response.delete_cookie("token")
-        return response
 
 @router.post("/workspace/create_directory")
 async def create_directory(
@@ -166,52 +119,52 @@ async def upload_file(
         return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(str(e))}", status_code=status.HTTP_303_SEE_OTHER)
 
 
-
 @router.get("/workspace/{folder_path:path}", response_class=HTMLResponse)
-async def workspace_subdir(request: Request, folder_path: str):
+@router.get("/workspace", response_class=HTMLResponse, include_in_schema=False)
+async def workspace(request: Request, folder_path: str = ""):
     """
-    Render workspace_subdir page
+    Render workspace page dynamically for root and subdirectories
     """
-    logger.info(f"GET request for '/workspace/ {folder_path}'")
+    logger.info(f"GET request for workspace: '{folder_path}'")
 
+    # getting token from cookies 
     id_token = request.cookies.get('token')
-    
+
+    # token validation 
     validation_result = token_validation(id_token)
     if isinstance(validation_result, RedirectResponse):
         return validation_result
     
     data = validation_result
-
+    
     try:
-        current_user = User(
-            id=data["user_id"],
-            email=data["email"]
-        )
-
+        current_user = User(id=data["user_id"], email=data["email"])
         sys_service = SystemService(user=current_user)
         current_user = sys_service.get_user()
         
-        # Normalise to an absolute path: /docs/projects
-        current_path = "/" + folder_path.strip("/")
+        # Normalise to an absolute path: e.g., "/" or "/docs/projects"
+        current_path = "/" + folder_path.strip("/") if folder_path else "/"
 
-        # Validate the path exists as a stored directory
-        all_dirs = sys_service.get_all_dir()
-        all_paths = {
-            d.get("meta", {}).get("path", "")
-            for d in (all_dirs or {}).get("directory", [])
-        }
-        if current_path not in all_paths:
-            return RedirectResponse(url="/workspace", status_code=status.HTTP_303_SEE_OTHER)
+        # Validate the path exists if it's not the root
+        if current_path != "/":
+            all_dirs = sys_service.get_all_dir()
+            all_paths = {
+                d.get("meta", {}).get("path", "")
+                for d in (all_dirs or {}).get("directory", [])
+            }
+            if current_path not in all_paths:
+                logger.warning(f"Path not found: {current_path}, redirecting to root")
+                return RedirectResponse(url="/workspace/", status_code=status.HTTP_303_SEE_OTHER)
 
-        # Sidebar always shows root-level dirs
-        sidebar_dirs = sys_service.get_dirs_in_path(current_path)
-        # Main grid shows immediate children of current path
+        # Sidebar always shows root-level dirs (or current context, depending on preference)
+        # Here we follow existing logic: it shows items in the current path
+        sidebar_dirs = sys_service.get_dirs_in_path("/")
         workspace_dirs = sys_service.get_dirs_in_path(current_path)
         
-        # Fetch blobs associated with current_path using list_dirs
+        # Fetch blobs associated with current_path
         workspace_files = sys_service.storage_service.list_dirs(current_path)
 
-        # Build breadcrumbs: [{name, url}, ...]
+        # Build dynamic breadcrumbs
         segments = [s for s in folder_path.split("/") if s]
         breadcrumbs = [
             {"name": seg, "url": "/workspace/" + "/".join(segments[: i + 1])}
@@ -220,21 +173,19 @@ async def workspace_subdir(request: Request, folder_path: str):
 
         return templates.TemplateResponse(
             request=request,
-            name="workspace/workspace_subdir.html",
+            name="workspace/workspace.html", 
             context={
                 "username": current_user.name,
-                "user_email": data["email"],
+                "user_email": data["email"], 
                 "sidebar_dirs": sidebar_dirs,
                 "workspace_dirs": workspace_dirs,
                 "workspace_files": workspace_files,
                 "path": current_path,
                 "breadcrumbs": breadcrumbs,
-            },
+            }
         )
-
     except Exception as e:
-        logger.error(f"Error in workspace_subdir: {str(e)}")
+        logger.error(f"Error in workspace route: {str(e)}")
         response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
         response.delete_cookie("token")
         return response
-

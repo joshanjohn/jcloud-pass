@@ -73,6 +73,30 @@ class MongoMetadataService(MetadataProvider):
                 }
             }
         )
-        
 
-            
+    def remove_directory(self, user_id: str, dir_path: str) -> bool:
+        try:
+            self.users_col.update_one(
+                {"id": user_id},
+                {"$pull": {"directory": {"meta.path": dir_path}}}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to remove directory {dir_path} for user {user_id}: {str(e)}")
+            return False
+
+    def remove_file_record(self, user_id: str, file_name: str, path: str) -> bool:
+        try:
+            self.users_col.update_one(
+                {
+                    "id": user_id,
+                    "directory.meta.path": path
+                },
+                {
+                    "$pull": {"directory.$.data": {"name": file_name}}
+                }
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to remove file record {file_name} from {path} for user {user_id}: {str(e)}")
+            return False

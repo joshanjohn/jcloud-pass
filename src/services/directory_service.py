@@ -60,8 +60,27 @@ class DirectoryService:
             logger.error(f"Failed to create directory '{name}' for user {self.user.name}: {str(e)}")
             return False
 
-    def delete_dir(self, name: str): 
-        pass
+    def delete_dir(self, dir_path: str) -> bool: 
+        logger.info(f"Deleting directory: {dir_path}")
+        try:
+            return self.metadata_service.remove_directory(self.user.id, dir_path)
+        except Exception as e:
+            logger.error(f"Failed to delete directory {dir_path}: {str(e)}")
+            return False
+
+    def delete_file(self, file_name: str, path: str, blob_name: str) -> bool:
+        logger.info(f"Deleting file {file_name} in {path}")
+        try:
+            # 1. Delete from Azure
+            storage_success = self.storage_service.delete_file(blob_name)
+            
+            # 2. Delete metadata record
+            meta_success = self.metadata_service.remove_file_record(self.user.id, file_name, path)
+            
+            return storage_success and meta_success
+        except Exception as e:
+            logger.error(f"Error deleting file: {str(e)}")
+            return False
 
     def get_all_dir(self): 
         doc = self.metadata_service.get_all_directories(self.user.id)
