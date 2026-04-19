@@ -218,7 +218,7 @@ async def delete_file(
         sys_service.delete_file(file_id=file_id,
                                 blob_name=full_path # with name 
                                 )
-
+    
         return {"status": "success", "message": "File deleted successfully"}
 
         
@@ -230,6 +230,44 @@ async def delete_file(
         )
     
 
-@router.delete("/workspace/")
-async def delete_dir( request: Request,): 
-    pass
+@router.delete("/workspace/dir/")
+async def delete_dir( 
+    request: Request,
+    id: str = Form(...),
+    name: str = Form(...),
+    path: str = Form("/")
+    ): 
+
+    """
+    Delete endpoint for file
+    """
+    logger.info(f"DELETE request for folder :{id} - {path}")
+
+    id_token = request.cookies.get('token')
+    
+    validation_result = token_validation(id_token)
+    if isinstance(validation_result, RedirectResponse):
+        return validation_result
+    
+    data = validation_result
+    
+
+    try:
+        current_user = User(id=data["user_id"], email=data["email"])
+        sys_service = SystemService(user=current_user)
+
+        sys_service.delete_dir(
+            name=name,
+            dir_id=id,
+            dir_path=path # with name 
+        )
+
+        return {"status": "success", "message": "Folder deleted successfully"}
+
+        
+    except Exception as e:
+        logger.error(f"Error on workspace delete folder endpoint: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": f"Error deleting file: {str(e)}"}
+        )
