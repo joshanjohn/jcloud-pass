@@ -173,7 +173,23 @@ window.handleLogout = function () {
                 method: 'POST',
                 body: formData
             });
-            console.log(response)
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } else {
+                const errorJson = await response.json().catch(() => ({}));
+                console.error("Download failed:", response.status, errorJson);
+                alert(`Download Failed: ${errorJson.message || "Unknown error"}`);
+            }
         } catch (err) {
             console.error("Fetch error:", err);
             alert("Network error. Check connection.");

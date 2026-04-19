@@ -166,4 +166,4 @@ class DirectoryService:
         return blobs
 
     def download_file(self, full_path: str): 
-        pass
+        return self.storage_service.download_blob(full_path)

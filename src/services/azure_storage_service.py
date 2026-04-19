@@ -63,4 +63,10 @@ class AzureStorageService(StorageProvider):
             return []
 
     def download_blob(self, blob_name: str):
-        pass        
+        try:
+            blob_name = blob_name.lstrip("/")
+            blob_client = self.container_client.get_blob_client(blob=blob_name)
+            return blob_client.download_blob().chunks()
+        except Exception as e:
+            logger.error(f"Failed to stream {blob_name} from Azure Blob: {str(e)}")
+            return None
