@@ -54,7 +54,7 @@
                 {% if sidebar_dirs and sidebar_dirs.directory %}
                 <div class="nested-list">
                     {% for folder in sidebar_dirs.directory %}
-                     {% if folder.name != "root" %}
+                    {% if folder.name != "root" %}
                     <a href="/workspace{{ folder.meta.path }}" class="nested-item">
                         <i data-lucide="folder" class="w-4 h-4 text-gray-400"></i>
                         <span>{{ folder.name }}</span>
@@ -196,41 +196,69 @@
         <!-- Folders Section -->
         {% if workspace_dirs and workspace_dirs.directory %}
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
-            {% for folder in workspace_dirs.directory %}
-            {% if folder.name != "root" %}  <!-- hide root folder  -->
-            <div class="folder-card group">
+            {% for folder in workspace_dirs.directory if folder.name != "root" %}
+
+            <div class="folder-card group flex flex-col justify-between h-full p-4">
+
+                <!-- Top row -->
                 <div class="flex items-center justify-between mb-4">
-                    <a href="/workspace{{ folder.meta.path }}"
-                        class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-black transition-colors">
-                        <i data-lucide="folder"
-                            class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors"></i>
+
+                    <!-- Icon + Name -->
+                    <a href="/workspace{{ folder.meta.path }}" class="flex items-center gap-3 min-w-0">
+                        <div
+                            class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-black transition-colors">
+                            <i data-lucide="folder"
+                                class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-900 truncate">
+                            {{ folder.name }}
+                        </h3>
                     </a>
-                    <div class="dropdown">
+
+                    <!-- Dropdown -->
+                    <div class="dropdown shrink-0">
                         <button class="text-gray-400 hover:text-black dropdown-toggle">
                             <i data-lucide="more-horizontal" class="w-5 h-5"></i>
                         </button>
                         <div class="dropdown-content">
                             <button class="dropdown-item" data-action="rename" data-name="{{ folder.name }}"
                                 data-path="/workspace{{ folder.meta.path }}" data-type="directory">
-                                <i data-lucide="edit-2"></i>
-                                Rename
+                                <i data-lucide="edit-2"></i> Rename
                             </button>
                             <button class="dropdown-item text-red-600" data-action="delete"
-                                data-name="{{ folder.name }}" data-path="/workspace{{ folder.meta.path }}"
+                                data-id="{{ folder.id }}" 
+                                data-name="{{ folder.name }}"
+                                data-path="{{ folder.meta.path }}"
                                 data-type="directory">
-                                <i data-lucide="trash-2"></i>
-                                Delete
+                                <i data-lucide="trash-2"></i> Delete
                             </button>
                         </div>
                     </div>
                 </div>
-                <a href="/workspace{{ folder.meta.path }}" class="block">
-                    <h3 class="font-semibold text-gray-900 truncate">{{ folder.name }}</h3>
-                    <p class="text-xs text-gray-500 mt-1">Directory</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ folder.meta.updated if folder.meta else '' }}</p>
+
+                <!-- Bottom section -->
+                <a href="/workspace{{ folder.meta.path }}" class="block mt-auto">
+                    <div class="flex justify-between items-end text-xs text-gray-500">
+
+                        <!-- Left: Updated date -->
+                        <div class="flex flex-col">
+                            <span>Last updated</span>
+                            <span>
+                                {{ folder.meta.updated.strftime("%d/%m/%Y %H:%M") if folder.meta and folder.meta.updated
+                                else '' }}
+                            </span>
+                        </div>
+
+                        <!-- Right: Folder size -->
+                        <span>
+                            {{ (folder.meta.size / (1024 * 1024)) | round(2) }} MB
+                        </span>
+
+                    </div>
                 </a>
+
             </div>
-            {% endif %}
+
             {% endfor %}
         </div>
         {% endif %}
@@ -286,7 +314,6 @@
                                     <i data-lucide="edit-2"></i>
                                     Rename
                                 </button>
-                                <p>k-{{ file.id }}</p>
                                 <button class="dropdown-item text-red-600" data-action="delete"
                                     data-name="{{ file.name }}" data-id="{{ file.id }}"
                                     data-path="{{ path.strip('/') + '/' + file.name if path != '/' else path.strip('/') + file.name}}"

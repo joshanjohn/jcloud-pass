@@ -60,13 +60,9 @@ class DirectoryService:
             logger.error(f"Failed to create directory '{name}' for user {self.user.name}: {str(e)}")
             return False
 
-    def delete_dir(self, dir_path: str) -> bool: 
+    def delete_dir(self, name: str, dir_id: str, dir_path: str) -> bool: 
         logger.info(f"Deleting directory: {dir_path}")
-        try:
-            return self.metadata_service.remove_directory(self.user.id, dir_path)
-        except Exception as e:
-            logger.error(f"Failed to delete directory {dir_path}: {str(e)}")
-            return False
+        return self.metadata_service.remove_directory(user_id=self.user.id, dir_path=dir_path)
 
     def delete_file(self, file_id: str,  blob_name: str) -> bool:
         logger.info(f"Deleting file id:{file_id} ;blob name: {blob_name}")

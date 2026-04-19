@@ -96,31 +96,67 @@ class MongoMetadataService(MetadataProvider):
         )
 
     def remove_directory(self, user_id: str, dir_path: str) -> None:
-        try:
-            escaped_path = re.escape(dir_path)
+        logger.info(f"PATH: {dir_path}")
 
-            result = self.users_col.delete_many({
-                "user_id": user_id,
-                "meta.path": {
-                    "$regex": f"^{escaped_path}(/|$)"
+        # Check if any child directory exists
+        child_dir = self.users_col.find_one({
+            "id": user_id,
+            "directory": {
+                "$elemMatch": {
+                    "meta.path": {
+                        "$regex": f"^{dir_path}/"
+                    }
                 }
-            })
+            }
+        })
 
-            logger.info(f"Deleted {result.deleted_count} documents for path {dir_path}")
+        if child_dir:
+            raise Exception(f"Cannot delete '{dir_path}': it contains subdirectories")
 
-            return True
+        # Check if directory itself has files 
+        dir_with_files = self.users_col.find_one({
+            "id": user_id,
+            "directory": {
+                "$elemMatch": {
+                    "meta.path": dir_path,
+                    "data.0": {"$exists": True}
+                }
+            }
+        })
 
-        except Exception as e:
-            logger.error(
-                f"Failed to remove directory {dir_path} for user {user_id}: {str(e)}"
-            )
-            return False
+        if dir_with_files:
+            msg = f"Cannot delete '{dir_path}': it contains files"
+            logger.warning(msg)
+            raise Exception(msg)
+
+        # Delete directory (remove array element)
+        result = self.users_col.update_one(
+            {"id": user_id},
+            {
+                "$pull": {
+                    "directory": {
+                        "meta.path": dir_path
+                    }
+                }
+            }
+        )
+
+        if result.modified_count == 0:
+            msg = f"Directory '{dir_path}' not found or already deleted"
+            logger.warning(msg)
+            raise Exception(msg)
+
+        logger.info(f"Deleted directory for path {dir_path}")
+        return True
 
     def remove_file_record(self, user_id: str, file_id: str) -> None:
         try:
             result = self.users_col.update_one(
-                {"id": self.user.id},
-                {"$pull": {"directory.$[].data": {"id": file_id}}}
+                {"id": user_id},
+                {"$pull": 
+                    {"directory.$[].data": {"id": file_id}
+                     }
+                }
             )
 
             if result.modified_count == 0:

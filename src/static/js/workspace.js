@@ -81,10 +81,10 @@ window.handleLogout = function() {
             if (!actionBtn) return;
 
             const action = actionBtn.dataset.action;
+            const id = actionBtn.dataset.id;
             const name = actionBtn.dataset.name;
             const path = actionBtn.dataset.path;
             const type = actionBtn.dataset.type;
-            const id = actionBtn.dataset.id;
 
             if (action === 'rename') {
                 renameItem(name, path, type);
@@ -100,7 +100,6 @@ window.handleLogout = function() {
         if (!confirm(`Are you sure you want to delete this ${type}: "${name}"?`)) {
             return;
         }
-        console.log("FILE:"+id)
 
         if (!id && type === 'file') {
             console.error("Delete aborted: File ID is missing.");
@@ -134,7 +133,30 @@ window.handleLogout = function() {
                 alert("Network error. Check connection.");
             }
         } else {
-            alert("Directory deletion not yet implemented.");
+            const formData = new FormData();
+            formData.append('id', id);
+            formData.append('name', name);
+            formData.append('path', path);
+
+            try{ 
+                const response = await fetch('/workspace/dir/', {
+                    method: 'DELETE',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const errorJson = await response.json().catch(() => ({}));
+                    console.error("Delete folder failed status:", response.status, errorJson);
+                    const detail = errorJson.message || "Unknown error";
+                    alert(`Deletion Failed: ${detail}`);
+                }
+
+            }catch (err) {
+                console.error("Fetch error:", err);
+                alert("Network error. Check connection.");
+            }
         }
     }
 
