@@ -61,3 +61,6 @@ class AzureStorageService(StorageProvider):
         except Exception as e:
             logger.error(f"Failed to list blobs for {dir_path} in Azure Blob: {str(e)}")
             return []
+
+    def download_blob(self, blob_name: str):
+        pass        

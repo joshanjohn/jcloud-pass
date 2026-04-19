@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, status, Form, File, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from google.auth.transport import requests
 from pathlib import Path
@@ -143,7 +143,7 @@ async def create_directory(
 
 @router.post("/workspace/upload")
 async def upload_file(
-    request: Request,
+    request: Request, 
     file: UploadFile = File(...),
     path: str = Form("/")
 ):
@@ -269,4 +269,51 @@ async def delete_dir(
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"status": "error", "message": str(e)}
+        )
+    
+
+@router.post("/download-file")
+async def download_file(
+    request: Request,
+    id: str = Form(...),
+    name: str = Form(...),
+    path: str = Form("/")
+): 
+    """
+    Download endpoint for file
+    """
+    logger.info(f"POST request for download: {path}")
+
+    id_token = request.cookies.get('token')
+    
+    validation_result = token_validation(id_token)
+    if isinstance(validation_result, RedirectResponse):
+        return validation_result
+    
+    data = validation_result
+
+    try:
+        current_user = User(id=data["user_id"], email=data["email"])
+        sys_service = SystemService(user=current_user)
+
+        # Call sys_service download_file which uses directory_service logic
+        stream_generator = sys_service.download_file(full_path=path)
+        
+        if not stream_generator:
+            return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "File not found"})
+
+        filename = path.split("/")[-1]
+        
+        return StreamingResponse(
+            stream_generator,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error on workspace download file endpoint: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": f"Error downloading file: {str(e)}"}
         )

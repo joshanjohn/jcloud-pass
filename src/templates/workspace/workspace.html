@@ -304,10 +304,12 @@
                                 <i data-lucide="more-horizontal" class="w-4 h-4"></i>
                             </button>
                             <div class="dropdown-content">
-                                <a href="#" class="dropdown-item">
+                                 <button class="dropdown-item" data-action="download" data-name="{{ file.name }}"
+                                    data-path="{{ (path + '/' + file.name) if path != '/' else file.name }}"
+                                    data-type="file">
                                     <i data-lucide="download"></i>
-                                    Download
-                                </a>
+                                    download
+                                </button>
                                 <button class="dropdown-item" data-action="rename" data-name="{{ file.name }}"
                                     data-path="{{ (path + '/' + file.name) if path != '/' else file.name }}"
                                     data-type="file">

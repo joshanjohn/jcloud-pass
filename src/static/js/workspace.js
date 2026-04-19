@@ -1,5 +1,5 @@
 
-window.handleUploadTrigger = function(id) {
+window.handleUploadTrigger = function (id) {
     const input = document.getElementById(id);
     if (input) {
         console.log("Triggering input:", id);
@@ -7,21 +7,21 @@ window.handleUploadTrigger = function(id) {
     }
 };
 
-window.handleFileChange = function(input) {
+window.handleFileChange = function (input) {
     if (input.files && input.files.length > 0) {
         console.log("File selected, submitting form...");
         input.form.submit();
     }
 };
 
-window.handleLogout = function() {
+window.handleLogout = function () {
     window.location.href = '/logout';
 };
 
-(function() {
+(function () {
     function init() {
         console.log("Workspace JS initializing...");
-        
+
         // Initialize Lucide Icons
         if (window.lucide) {
             window.lucide.createIcons();
@@ -42,10 +42,10 @@ window.handleLogout = function() {
             if (toggle) {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 const dropdown = toggle.closest('.dropdown');
                 const content = dropdown.querySelector('.dropdown-content');
-                
+
                 // Close other open dropdowns
                 document.querySelectorAll('.dropdown-content.show').forEach(d => {
                     if (d !== content) d.classList.remove('show');
@@ -90,11 +90,13 @@ window.handleLogout = function() {
                 renameItem(name, path, type);
             } else if (action === 'delete') {
                 deleteItem(name, path, type, id);
-            } else if (action === 'open' && type === 'directory') {
-                window.location.href = path;
+            } else if (action === 'download') {
+                downloadItem(name, path, type, id);
             }
         });
     }
+
+
 
     async function deleteItem(name, path, type, id) {
         if (!confirm(`Are you sure you want to delete this ${type}: "${name}"?`)) {
@@ -108,7 +110,7 @@ window.handleLogout = function() {
         }
 
         console.log(`Attempting delete for ${type}: ${path} (ID: ${id})`);
-        
+
         if (type === 'file') {
             const formData = new FormData();
             formData.append('file_id', id);
@@ -138,7 +140,7 @@ window.handleLogout = function() {
             formData.append('name', name);
             formData.append('path', path);
 
-            try{ 
+            try {
                 const response = await fetch('/workspace/dir/', {
                     method: 'DELETE',
                     body: formData
@@ -153,10 +155,28 @@ window.handleLogout = function() {
                     alert(`Deletion Failed: ${detail}`);
                 }
 
-            }catch (err) {
+            } catch (err) {
                 console.error("Fetch error:", err);
                 alert("Network error. Check connection.");
             }
+        }
+    }
+
+    async function downloadItem(name, path, type, id) {
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('name', name);
+        formData.append('path', path);
+
+        try {
+            const response = await fetch('/download-file', {
+                method: 'POST',
+                body: formData
+            });
+            console.log(response)
+        } catch (err) {
+            console.error("Fetch error:", err);
+            alert("Network error. Check connection.");
         }
     }
 
@@ -193,7 +213,7 @@ window.handleLogout = function() {
 
         const openModal = () => {
             modal.classList.remove("hidden");
-            setTimeout(() => { if(input) input.focus(); }, 50);
+            setTimeout(() => { if (input) input.focus(); }, 50);
         };
 
         // Delegate click for multiple Create Folder buttons
@@ -203,9 +223,9 @@ window.handleLogout = function() {
             }
         });
 
-        if(closeBtn) closeBtn.addEventListener("click", closeModal);
-        if(cancelBtn) cancelBtn.addEventListener("click", closeModal);
-        if(backdrop) backdrop.addEventListener("click", (e) => {
+        if (closeBtn) closeBtn.addEventListener("click", closeModal);
+        if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+        if (backdrop) backdrop.addEventListener("click", (e) => {
             if (e.target === backdrop) closeModal();
         });
 
@@ -236,7 +256,7 @@ window.handleLogout = function() {
                 modal.classList.remove("hidden");
                 errorEl.textContent = errorMsg;
                 errorEl.classList.remove("hidden");
-                
+
                 if (input) {
                     input.classList.add("input-error");
                 }

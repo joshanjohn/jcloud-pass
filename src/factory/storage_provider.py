@@ -23,6 +23,6 @@ class StorageProvider(ABC):
     def delete_file(self, blob_name: str) -> bool:
         pass
 
-    # @abstractmethod
-    # def delete_dir(self, blob_name: str) -> None: 
-    #     pass
+    @abstractmethod
+    def download_blob(self, blob_name: str): 
+        pass
