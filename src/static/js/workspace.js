@@ -149,8 +149,8 @@ window.handleLogout = function() {
                 } else {
                     const errorJson = await response.json().catch(() => ({}));
                     console.error("Delete folder failed status:", response.status, errorJson);
-                    const detail = errorJson.detail ? JSON.stringify(errorJson.detail) : "Unknown error";
-                    alert(`Deletion Failed (${response.status}): ${detail}`);
+                    const detail = errorJson.message || "Unknown error";
+                    alert(`Deletion Failed: ${detail}`);
                 }
 
             }catch (err) {

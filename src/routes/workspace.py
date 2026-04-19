@@ -259,15 +259,14 @@ async def delete_dir(
         sys_service.delete_dir(
             name=name,
             dir_id=id,
-            dir_path=path # with name 
+            dir_path=path
         )
 
         return {"status": "success", "message": "Folder deleted successfully"}
 
-        
     except Exception as e:
         logger.error(f"Error on workspace delete folder endpoint: {str(e)}")
         return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"message": f"Error deleting file: {str(e)}"}
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"status": "error", "message": str(e)}
         )
