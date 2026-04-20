@@ -164,3 +164,6 @@ class DirectoryService:
                 logger.warning(f"File {b['name']} in storage has no matching metadata ID in DB.")
             
         return blobs
+
+    def download_file(self, full_path: str): 
+        return self.storage_service.download_blob(full_path)
