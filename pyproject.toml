@@ -1,7 +1,7 @@
 [project]
 name = "jcloud-pass"
 version = "0.1.0"
-description = "Add your description here"
+description = "A cloud PaaS application which allow user to store files."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
