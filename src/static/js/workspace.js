@@ -18,6 +18,53 @@ window.handleLogout = function () {
     window.location.href = '/logout';
 };
 
+window.showErrorToast = function(message) {
+    const container = document.getElementById('toast-container');
+    const template = document.getElementById('toast-template');
+    if (!container || !template) return;
+
+    const toastNode = template.content.cloneNode(true);
+    const toast = toastNode.firstElementChild;
+    const messageEl = toast.querySelector('.toast-message');
+    
+    if (messageEl) {
+        messageEl.textContent = message;
+    }
+
+    const closeBtn = toast.querySelector('.toast-close');
+    if (closeBtn) {
+        closeBtn.onclick = () => window.removeToast(toast);
+    }
+
+    container.appendChild(toast);
+    
+    if (window.lucide) {
+        window.lucide.createIcons({ root: toast });
+    }
+
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+    });
+
+    const timeoutId = setTimeout(() => {
+        window.removeToast(toast);
+    }, 15000); // 15 seconds 
+
+    toast.dataset.timeoutId = timeoutId;
+};
+
+window.removeToast = function(toast) {
+    toast.classList.add('translate-y-4', 'opacity-0');
+    if (toast.dataset.timeoutId) {
+        clearTimeout(toast.dataset.timeoutId);
+    }
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 300);
+};
+
 (function () {
     function init() {
         console.log("Workspace JS initializing...");
@@ -105,7 +152,7 @@ window.handleLogout = function () {
 
         if (!id && type === 'file') {
             console.error("Delete aborted: File ID is missing.");
-            alert("Error: File ID not found. This file might not have a database record.");
+            window.showErrorToast("Error: File ID not found. This file might not have a database record.");
             return;
         }
 
@@ -128,11 +175,11 @@ window.handleLogout = function () {
                     const errorJson = await response.json().catch(() => ({}));
                     console.error("Delete failed status:", response.status, errorJson);
                     const detail = errorJson.detail ? JSON.stringify(errorJson.detail) : "Unknown error";
-                    alert(`Deletion Failed (${response.status}): ${detail}`);
+                    window.showErrorToast(`Deletion Failed (${response.status}): ${detail}`);
                 }
             } catch (err) {
                 console.error("Fetch error:", err);
-                alert("Network error. Check connection.");
+                window.showErrorToast("Network error. Check connection.");
             }
         } else {
             const formData = new FormData();
@@ -152,12 +199,12 @@ window.handleLogout = function () {
                     const errorJson = await response.json().catch(() => ({}));
                     console.error("Delete folder failed status:", response.status, errorJson);
                     const detail = errorJson.message || "Unknown error";
-                    alert(`Deletion Failed: ${detail}`);
+                    window.showErrorToast(`Deletion Failed: ${detail}`);
                 }
 
             } catch (err) {
                 console.error("Fetch error:", err);
-                alert("Network error. Check connection.");
+                window.showErrorToast("Network error. Check connection.");
             }
         }
     }
@@ -188,11 +235,11 @@ window.handleLogout = function () {
             } else {
                 const errorJson = await response.json().catch(() => ({}));
                 console.error("Download failed:", response.status, errorJson);
-                alert(`Download Failed: ${errorJson.message || "Unknown error"}`);
+                window.showErrorToast(`Download Failed: ${errorJson.message || "Unknown error"}`);
             }
         } catch (err) {
             console.error("Fetch error:", err);
-            alert("Network error. Check connection.");
+            window.showErrorToast("Network error. Check connection.");
         }
     }
 
@@ -200,7 +247,7 @@ window.handleLogout = function () {
         const newName = prompt(`Enter new name for ${type}:`, name);
         if (newName && newName !== name) {
             console.log(`Renaming ${type} from ${name} to ${newName} at ${path}`);
-            alert("Rename functionality coming soon!");
+            window.showErrorToast("Rename functionality coming soon!");
         }
     }
 

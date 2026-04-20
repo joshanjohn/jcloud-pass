@@ -375,6 +375,24 @@
 
     </main>
 
+    <!-- Toast Template -->
+    <template id="toast-template">
+        <div class="bg-white border border-red-200 shadow-xl rounded-2xl p-4 flex items-start gap-4 w-80 transform transition-all duration-300 translate-y-4 opacity-0 flex-shrink-0">
+            <div class="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-500"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-gray-900">Error</h4>
+                <p class="text-xs text-gray-500 mt-1 break-words toast-message"></p>
+            </div>
+            <button class="text-gray-400 hover:text-gray-900 transition-colors flex-shrink-0 p-1 rounded hover:bg-gray-100 toast-close">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </template>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3"></div>
 
     <script>
         // Initialize Lucide icons
