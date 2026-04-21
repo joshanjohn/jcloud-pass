@@ -95,6 +95,36 @@ class MongoMetadataService(MetadataProvider):
             }
         )
 
+    def update_file_record(self, user_id: str, file: File, path: str) -> None:
+        """Updates an existing file record by replacing it with new metadata."""
+        # First remove the existing file record with the same name
+        self.users_col.update_one(
+            {
+                "id": user_id,
+                "directory.meta.path": path
+            },
+            {
+                "$pull": {
+                    "directory.$.data": {"name": file.name}
+                }
+            }
+        )
+        # Then add the new record
+        self.create_file_record(user_id, file, path)
+
+    def file_exists(self, user_id: str, filename: str, path: str) -> bool:
+        """Checks if a file with the given name exists in the specified path for the user."""
+        user_record = self.users_col.find_one({
+            "id": user_id,
+            "directory": {
+                "$elemMatch": {
+                    "meta.path": path,
+                    "data.name": filename
+                }
+            }
+        })
+        return user_record is not None
+
     def remove_directory(self, user_id: str, dir_path: str) -> None:
         logger.info(f"PATH: {dir_path}")
 

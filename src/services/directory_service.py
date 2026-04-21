@@ -95,7 +95,11 @@ class DirectoryService:
 
 
 
-    def upload_file(self, file: UploadFile, data: bytes, path: str) -> bool: 
+    def check_file_exists(self, filename: str, path: str) -> bool:
+        """Helper to check if file exists in metadata."""
+        return self.metadata_service.file_exists(self.user.id, filename, path)
+
+    def upload_file(self, file: UploadFile, data: bytes, path: str, override: bool = False) -> bool: 
 
         # Build the full path
         clean_path = path.strip("/")
@@ -107,11 +111,13 @@ class DirectoryService:
             full_path = f"{clean_path}/{file.filename}"
         else:
             full_path = file.filename
-        pass
         
+        # Check if file exists before proceeding if override is False
+        if not override and self.check_file_exists(file.filename, path):
+            raise Exception(f"FILE_EXISTS:{file.filename}")
+
         timestamp = datetime.now()
         
-
         meta = Metadata(
             size = file.size,
             created=timestamp,
@@ -119,19 +125,24 @@ class DirectoryService:
             path=full_path
         )
 
-        file: File = File(
+        file_obj: File = File(
             id=str(uuid.uuid4()),
             name=file.filename,
             meta=meta
         )
 
         try: 
-            self.metadata_service.create_file_record(user_id=self.user.id, file=file, path=path)
+            if override:
+                self.metadata_service.update_file_record(user_id=self.user.id, file=file_obj, path=path)
+            else:
+                self.metadata_service.create_file_record(user_id=self.user.id, file=file_obj, path=path)
+                
             self.storage_service.upload_file(blob_name=full_path, file_data=data)
            
             return True
         except Exception as e: 
-            return True 
+            logger.error(f"Error uploading file: {str(e)}")
+            return False 
         
 
 

@@ -145,12 +145,13 @@ async def create_directory(
 async def upload_file(
     request: Request, 
     file: UploadFile = File(...),
-    path: str = Form("/")
+    path: str = Form("/"),
+    override: bool = Form(False)
 ):
     """
     POST request for uploading a file to a path
     """
-    logger.info(f"POST request for '/workspace/upload'")
+    logger.info(f"POST request for '/workspace/upload' (override={override})")
     
     id_token = request.cookies.get('token')
     
@@ -164,29 +165,36 @@ async def upload_file(
     try:
         current_user = User(id=data["user_id"] , email=data["email"])
         sys_service = SystemService(user=current_user)
-        current_user = sys_service.get_user()
         
-
-       
-        
-        # # Read the file contents
+        # Read the file contents
         file_data = await file.read()
 
         # Upload the file
         success = sys_service.upload_file(
             file=file, 
             data=file_data,
-            path=path
+            path=path,
+            override=override
         )
         
         if success:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest" or "application/json" in request.headers.get("Accept", ""):
+                 return JSONResponse({"status": "success", "url": redirect_url})
             return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
         else:
             return RedirectResponse(url=f"{redirect_url}?error=Failed+to+upload+file", status_code=status.HTTP_303_SEE_OTHER)
 
     except Exception as e:
-        logger.error(f"Error uploading file: {str(e)}")
-        return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(str(e))}", status_code=status.HTTP_303_SEE_OTHER)
+        error_msg = str(e)
+        if error_msg.startswith("FILE_EXISTS:"):
+            filename = error_msg.split(":", 1)[1]
+            return JSONResponse(
+                status_code=status.HTTP_409_CONFLICT,
+                content={"status": "conflict", "message": f"File '{filename}' already exists", "filename": filename}
+            )
+        
+        logger.error(f"Error uploading file: {error_msg}")
+        return RedirectResponse(url=f"{redirect_url}?error={urllib.parse.quote(error_msg)}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 
