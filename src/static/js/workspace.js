@@ -7,12 +7,53 @@ window.handleUploadTrigger = function (id) {
     }
 };
 
-window.handleFileChange = function (input) {
+window.handleFileChange = async function (input) {
     if (input.files && input.files.length > 0) {
-        console.log("File selected, submitting form...");
-        input.form.submit();
+        await uploadFile(input);
     }
 };
+
+async function uploadFile(input, override = false) {
+    const file = input.files[0];
+    const formData = new FormData(input.form);
+    
+    if (override) {
+        formData.set('override', 'true');
+    }
+
+    console.log(`Uploading file "${file.name}"...`);
+
+    try {
+        const response = await fetch(input.form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.status === 409) {
+            const data = await response.json();
+            if (confirm(`The file "${file.name}" already exists in this directory. Do you want to override it?`)) {
+                return await uploadFile(input, true);
+            } else {
+                input.value = ''; // Reset input
+                return;
+            }
+        }
+
+        if (response.ok) {
+            const data = await response.json();
+            window.location.href = data.url || window.location.pathname;
+        } else {
+            console.error("Upload failed with status:", response.status);
+            window.showErrorToast("Upload failed. Please try again.");
+        }
+    } catch (err) {
+        console.error("Error during upload:", err);
+        window.showErrorToast("Network error. Check connection.");
+    }
+}
 
 window.handleLogout = function () {
     window.location.href = '/logout';
