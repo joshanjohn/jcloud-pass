@@ -59,7 +59,7 @@ window.handleLogout = function () {
     window.location.href = '/logout';
 };
 
-window.showErrorToast = function(message) {
+window.showErrorToast = function (message) {
     const container = document.getElementById('toast-container');
     const template = document.getElementById('toast-template');
     if (!container || !template) return;
@@ -67,7 +67,7 @@ window.showErrorToast = function(message) {
     const toastNode = template.content.cloneNode(true);
     const toast = toastNode.firstElementChild;
     const messageEl = toast.querySelector('.toast-message');
-    
+
     if (messageEl) {
         messageEl.textContent = message;
     }
@@ -78,7 +78,7 @@ window.showErrorToast = function(message) {
     }
 
     container.appendChild(toast);
-    
+
     if (window.lucide) {
         window.lucide.createIcons({ root: toast });
     }
@@ -94,7 +94,7 @@ window.showErrorToast = function(message) {
     toast.dataset.timeoutId = timeoutId;
 };
 
-window.removeToast = function(toast) {
+window.removeToast = function (toast) {
     toast.classList.add('translate-y-4', 'opacity-0');
     if (toast.dataset.timeoutId) {
         clearTimeout(toast.dataset.timeoutId);
@@ -174,13 +174,16 @@ window.removeToast = function(toast) {
             const path = actionBtn.dataset.path;
             const type = actionBtn.dataset.type;
 
-            if (action === 'rename') {
-                renameItem(name, path, type);
-            } else if (action === 'delete') {
+
+
+            if (action === 'delete') {
                 deleteItem(name, path, type, id);
             } else if (action === 'download') {
                 downloadItem(name, path, type, id);
             }
+            //   else if (action === 'rename') {
+            //     renameItem(name, path, type);
+            // }  
         });
     }
 
@@ -250,47 +253,47 @@ window.removeToast = function(toast) {
         }
     }
 
-    async function downloadItem(name, path, type, id) {
+    async function downloadItem(name, path, type) {
         const formData = new FormData();
-        formData.append('id', id);
-        formData.append('name', name);
         formData.append('path', path);
 
-        try {
-            const response = await fetch('/download-file', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = name;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                a.remove();
-            } else {
-                const errorJson = await response.json().catch(() => ({}));
-                console.error("Download failed:", response.status, errorJson);
-                window.showErrorToast(`Download Failed: ${errorJson.message || "Unknown error"}`);
+        if (type === 'file') {
+            try {
+                const response = await fetch('/download-file', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = name;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    const errorJson = await response.json().catch(() => ({}));
+                    console.error("Download failed:", response.status, errorJson);
+                    window.showErrorToast(`Download Failed: ${errorJson.message || "Unknown error"}`);
+                }
+            } catch (err) {
+                console.error("Fetch error:", err);
+                window.showErrorToast("Network error. Check connection.");
             }
-        } catch (err) {
-            console.error("Fetch error:", err);
-            window.showErrorToast("Network error. Check connection.");
         }
     }
 
-    function renameItem(name, path, type) {
-        const newName = prompt(`Enter new name for ${type}:`, name);
-        if (newName && newName !== name) {
-            console.log(`Renaming ${type} from ${name} to ${newName} at ${path}`);
-            window.showErrorToast("Rename functionality coming soon!");
-        }
-    }
+    // function renameItem(name, path, type) {
+    //     const newName = prompt(`Enter new name for ${type}:`, name);
+    //     if (newName && newName !== name) {
+    //         console.log(`Renaming ${type} from ${name} to ${newName} at ${path}`);
+    //         window.showErrorToast("Rename functionality coming soon!");
+    //     }
+    // }
 
     function initCreateFolder() {
         const modal = document.getElementById("create-folder-modal");
