@@ -178,3 +178,25 @@ class DirectoryService:
 
     def download_file(self, full_path: str): 
         return self.storage_service.download_blob(full_path)
+    
+    def get_duplicate_files(self):
+
+        duplicates = self.storage_service.duplicated_blob()
+        if not duplicates:
+            return []
+
+        # Build a path -> file_id lookup from MongoDB metadata so the
+        # frontend delete action has a valid ID for each duplicate.
+        doc = self.metadata_service.get_all_directories(self.user.id)
+        id_map: dict = {}
+        if doc and "directory" in doc:
+            for directory in doc.get("directory", []):
+                for file_data in directory.get("data", []):
+                    blob_path = file_data.get("meta", {}).get("path", "")
+                    id_map[blob_path] = file_data.get("id", "")
+
+        for dup in duplicates:
+            dup["id"] = id_map.get(dup["path"], "")
+
+        return duplicates
+    

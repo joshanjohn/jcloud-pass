@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Iterator
 
 
 class StorageProvider(ABC):
@@ -24,5 +25,10 @@ class StorageProvider(ABC):
         pass
 
     @abstractmethod
-    def download_blob(self, blob_name: str): 
+    def download_blob(self, blob_name: str) -> Iterator[bytes]: 
         pass
+    
+    @abstractmethod
+    def duplicated_blob(self): 
+        pass
+    
