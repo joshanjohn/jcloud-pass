@@ -54,8 +54,11 @@ class MongoMetadataService(MetadataProvider):
         else: 
             self.user.name = user_record["name"]
 
-    def get_user_record(self, user_id: str) -> Optional[Dict[str, Any]]:
-        return self.users_col.find_one({"id": user_id})
+    def get_user_record(self, user_id: str) -> Optional[Dict[str, Any]] | None:
+        try: 
+             return self.users_col.find_one({"id": user_id})
+        except: 
+            return None
 
     def create_user(self, user_data: Dict[str, Any]) -> None:
         self.users_col.insert_one(user_data)
