@@ -283,8 +283,6 @@ async def delete_dir(
 @router.post("/download-file")
 async def download_file(
     request: Request,
-    id: str = Form(...),
-    name: str = Form(...),
     path: str = Form("/")
 ): 
     """
@@ -325,3 +323,40 @@ async def download_file(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"message": f"Error downloading file: {str(e)}"}
         )
+    
+@router.get("/duplicates", response_class=HTMLResponse)
+async def duplicate_files(request: Request): 
+    logger.info(f"GET request for duplicate items in workspace")
+
+    id_token = request.cookies.get('token')
+    
+    validation_result = token_validation(id_token)
+    if isinstance(validation_result, RedirectResponse):
+        return validation_result
+    
+    data = validation_result
+    try:
+        current_user = User(id=data["user_id"], email=data["email"])
+        sys_service = SystemService(user=current_user)
+        
+        duplicates = sys_service.get_duplicate_files()
+        
+        # Sidebar always shows root-level dirs for navigation
+        sidebar_dirs = sys_service.get_dirs_in_path("/")
+
+        return templates.TemplateResponse(
+            request=request,
+            name="workspace/duplicates.html", 
+            context={
+                "username": sys_service.get_user().name,
+                "user_email": data["email"], 
+                "sidebar_dirs": sidebar_dirs,
+                "workspace_files": duplicates,
+                "path": "/duplicates",
+                "breadcrumbs": [{"name": "Duplicates", "url": "/duplicates"}],
+            }
+        )
+        
+    except Exception as e: 
+        logger.error(f"Error on GET duplicate file endpoint: {str(e)}")
+        return RedirectResponse(url="/workspace", status_code=status.HTTP_303_SEE_OTHER)

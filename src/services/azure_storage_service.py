@@ -1,5 +1,8 @@
+from collections import defaultdict
+import hashlib
 from src.database.core.azure_blob_connection import AzureBlobConnection
 from src.utils import logger
+from typing import Iterator, List, Dict, Any
 from src.factory.storage_provider import StorageProvider
 
 class AzureStorageService(StorageProvider):
@@ -62,7 +65,7 @@ class AzureStorageService(StorageProvider):
             logger.error(f"Failed to list blobs for {dir_path} in Azure Blob: {str(e)}")
             return []
 
-    def download_blob(self, blob_name: str):
+    def download_blob(self, blob_name: str) -> Iterator[bytes]:
         try:
             blob_name = blob_name.lstrip("/")
             blob_client = self.container_client.get_blob_client(blob=blob_name)
@@ -70,3 +73,62 @@ class AzureStorageService(StorageProvider):
         except Exception as e:
             logger.error(f"Failed to stream {blob_name} from Azure Blob: {str(e)}")
             return None
+
+
+    def duplicated_blob(self) -> List[Dict[str, Any]]:
+        """
+            Azure service to find the duplicated blob for signed user using md5 hash of each blob 
+            and return the group of duplicated blob values.
+        """
+        try:
+            blobs_iter = self.container_client.list_blobs(include=["metadata"])
+            
+            groups: Dict[str, list] = defaultdict(list) 
+
+            for blob in blobs_iter:
+                filename = blob.name.split("/")[-1]
+
+                # Fetch full blob properties to read content_settings.content_md5
+                blob_client = self.container_client.get_blob_client(blob=blob.name)
+                props = blob_client.get_blob_properties()
+
+
+                # retrive content_md5 hash, if not found set to None
+                stored_md5 = (
+                    props.content_settings.content_md5
+                    if props.content_settings
+                    else None
+                )
+
+                if stored_md5:
+                    # if hash is in binary format the convert to string 
+                    content_hash = (
+                        stored_md5.hex() # convert hex string
+                        if isinstance(stored_md5, (bytes, bytearray))
+                        else str(stored_md5)
+                    )
+                else:
+                    # Fallback: download blob and compute SHA-256 locally
+                    logger.debug(
+                        f"No stored MD5 for '{blob.name}', downloading to compute hash."
+                    )
+                
+                # cretaing grpup of duplicated for same hash 
+                groups[content_hash].append({
+                    "name": filename,
+                    "path": blob.name,
+                    "size": blob.size,
+                    "last_modified": blob.last_modified,
+                    "content_hash": content_hash,
+                })
+
+            duplicates = [
+                entry
+                for members in groups.values()
+                if len(members) > 1
+                for entry in members
+            ]
+            return duplicates
+        except Exception as e:
+            logger.error(f"Failed to find duplicate blobs: {str(e)}")
+            return []
