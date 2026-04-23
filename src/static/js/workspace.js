@@ -13,6 +13,7 @@ window.handleFileChange = async function (input) {
     }
 };
 
+// UPLOAD FILE
 async function uploadFile(input, override = false) {
     const file = input.files[0];
     const formData = new FormData(input.form);
@@ -181,14 +182,11 @@ window.removeToast = function (toast) {
             } else if (action === 'download') {
                 downloadItem(name, path, type, id);
             }
-            //   else if (action === 'rename') {
-            //     renameItem(name, path, type);
-            // }  
         });
     }
 
 
-
+    // DELETE ITEM
     async function deleteItem(name, path, type, id) {
         if (!confirm(`Are you sure you want to delete this ${type}: "${name}"?`)) {
             return;
@@ -227,8 +225,6 @@ window.removeToast = function (toast) {
             }
         } else {
             const formData = new FormData();
-            formData.append('id', id);
-            formData.append('name', name);
             formData.append('path', path);
 
             try {
@@ -253,6 +249,7 @@ window.removeToast = function (toast) {
         }
     }
 
+    // DOWNLOAD
     async function downloadItem(name, path, type) {
         const formData = new FormData();
         formData.append('path', path);
@@ -287,14 +284,7 @@ window.removeToast = function (toast) {
         }
     }
 
-    // function renameItem(name, path, type) {
-    //     const newName = prompt(`Enter new name for ${type}:`, name);
-    //     if (newName && newName !== name) {
-    //         console.log(`Renaming ${type} from ${name} to ${newName} at ${path}`);
-    //         window.showErrorToast("Rename functionality coming soon!");
-    //     }
-    // }
-
+    // ADD FOLDER
     function initCreateFolder() {
         const modal = document.getElementById("create-folder-modal");
         if (!modal) return;

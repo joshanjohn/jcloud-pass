@@ -1,3 +1,10 @@
+"""
+Author : Joshan John
+Student Number : 3092883
+Email: joshanjohn2003@mail.com
+Project : https://github.com/joshanjohn/jcloud-pass.git
+"""
+
 from fastapi import status
 from fastapi.responses import RedirectResponse
 from google.auth.transport import requests
@@ -9,18 +16,27 @@ from src.utils.variables import logger
 firebase_request_adapter = requests.Request()
 
 def token_validation(token: str):
+    """
+    Token Validation method which validate given token. 
+    and if token is valid, it return the data from firebase
+    otherwise, it redirects to login page and clear cookies 
+    for "token". 
+    """
+    # check if token is exist 
     if not token:
         logger.error("No Token Found!")
         response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-        response.delete_cookie("token")
+        response.delete_cookie("token") # clear cookies 
         logger.info("Clear token cookies.. ")
         return response
 
+    # verify the token and return firebase data 
     try:
         data = verify_firebase_token(token, firebase_request_adapter)
         logger.info("Token validated successfully")
         return data
 
+    # if exception occur, clear token and redirect to login page 
     except Exception as e:
         logger.error(f"Error while validating token: {str(e)}")
         response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -29,10 +45,10 @@ def token_validation(token: str):
     
 def valid_dir_name(dir_name: str) -> tuple[str, dict | None]:
     """
-    Validates and strips a directory name.
-    Returns (stripped_name, None) if valid,
-    or      (stripped_name, {"success": False, "message": "..."})
+    Validation Method for given directory name, returns directory name and the message for each validation. 
     """
+
+    # remove empty space from both enf 
     dir_name = dir_name.strip()
 
     # Must not be empty
@@ -44,7 +60,7 @@ def valid_dir_name(dir_name: str) -> tuple[str, dict | None]:
         return dir_name, {"success": False, "message": "'.' and '..' are reserved names"}
 
 
-    # Invalid characters 
+    # Invalid special characters 
     invalid_chars = r'[\/:*?"<>.|]'
     match = re.search(invalid_chars, dir_name)
     if match:

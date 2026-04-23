@@ -1,10 +1,17 @@
+"""
+Author : Joshan John
+Student Number : 3092883
+Email: joshanjohn2003@mail.com
+Project : https://github.com/joshanjohn/jcloud-pass.git
+"""
+
 from azure.storage.blob import BlobServiceClient, ContainerClient
 from src.utils import azure_connection_string, logger
 
 class AzureBlobConnection: 
     def __init__(self):
         """
-        Initializes a fresh connection to the Azure Blob Service.
+        Initializes a connection to the Azure Blob Service.
         """
         try:
             self.blob_service_client = BlobServiceClient.from_connection_string(azure_connection_string)
@@ -28,7 +35,7 @@ class AzureBlobConnection:
                 container_client.create_container()
                 logger.info(f"Created new container for user: {container_name}")
             else:
-                logger.info(f"Using existing container for user: {container_name}")
+                logger.debug(f"Using existing container for user: {container_name}")
                 
             return container_client
             

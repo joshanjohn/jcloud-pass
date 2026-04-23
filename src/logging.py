@@ -1,11 +1,18 @@
+"""
+Author : Joshan John
+Student Number : 3092883
+Email: joshanjohn2003@mail.com
+Project : https://github.com/joshanjohn/jcloud-pass.git
+"""
+
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from enum import StrEnum
 
 # --- Constants ---
-LOG_DIR = ".logs"
-LOG_FILE = "app.log"
+LOG_DIR =".logs"
+LOG_FILE_NAME = "app.log"
 LOG_FORMAT_DEFAULT = "[%(asctime)s] %(levelname)s - %(name)s - %(message)s"
 LOG_FORMAT_DEBUG = "[%(asctime)s] %(levelname)s - %(name)s - %(pathname)s:%(funcName)s:%(lineno)d - %(message)s"
 
@@ -47,7 +54,7 @@ def configure_logging(log_level: str = LogLevels.info):
     root_logger.addHandler(console_handler)
 
     # Add File Handler 
-    file_path = log_path / LOG_FILE
+    file_path = log_path / LOG_FILE_NAME
     file_handler = RotatingFileHandler(
         file_path, 
         maxBytes=5 * 1024 * 1024,  # 5 MB

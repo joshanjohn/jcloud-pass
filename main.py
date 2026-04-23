@@ -4,31 +4,29 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
+
 import uvicorn
-from dotenv import load_dotenv
-
-load_dotenv()
-
 from src.routes.auth import router as auth_router
 from src.utils import logger
 from src.routes.workspace import router as workspace_router
 
+BASE_DIR = Path(__file__).resolve().parent 
 
 app = FastAPI()
 
 # Include Routers
-app.include_router(auth_router)
-app.include_router(workspace_router)
+app.include_router(auth_router)          # authentication router
+app.include_router(workspace_router)     # workspace router
 
-
-
+# mount static files folder 
 app.mount(
-    "/static",
-    StaticFiles(directory="src/static"),
+    path="/static",
+    app=StaticFiles(directory="src/static"),
     name="static",
 )
 
-BASE_DIR = Path(__file__).resolve().parent
+# base dir 
+
 templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "templates"))
 
 

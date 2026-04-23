@@ -1,34 +1,44 @@
+"""
+Author : Joshan John
+Student Number : 3092883
+Email: joshanjohn2003@mail.com
+Project : https://github.com/joshanjohn/jcloud-pass.git
+"""
+
 from collections import defaultdict
-import hashlib
 from src.database.core.azure_blob_connection import AzureBlobConnection
 from src.utils import logger
 from typing import Iterator, List, Dict, Any
 from src.factory.storage_provider import StorageProvider
 
 class AzureStorageService(StorageProvider):
+    """
+    This class implements storage service interface for Microsoft Azure blob storage.
+    """
     def __init__(self, user_id: str):
+        # setup azuee connetion and client
         self.conn = AzureBlobConnection()
         self.container_client = self.conn.get_user_container(user_id)
 
-    def upload_file(self, blob_name: str, file_data: bytes) -> bool:
+    def upload_blob(self, blob_name: str, file_data: bytes) -> bool:
+        """
+        Method to upload blob into Microsoft Azure blob storage container for 
+        given blob name , and file data 
+        """
         try:
             blob_client = self.container_client.get_blob_client(blob=blob_name)
-            blob_client.upload_blob(file_data, overwrite=True)
+            blob_client.upload_blob(file_data, overwrite=True) # set true for updating
             logger.info(f"Successfully uploaded {blob_name} to Azure Blob")
             return True
         except Exception as e:
             logger.error(f"Failed to upload {blob_name} to Azure Blob: {str(e)}")
             return False
 
-    def download_file(self, blob_name: str) -> bytes:
-        try:
-            blob_client = self.container_client.get_blob_client(blob=blob_name)
-            return blob_client.download_blob().readall()
-        except Exception as e:
-            logger.error(f"Failed to download {blob_name} from Azure Blob: {str(e)}")
-            return b""
 
-    def delete_file(self, blob_name: str) -> bool:
+    def delete_blob(self, blob_name: str) -> bool:
+        """
+        Method to delete a blob for fiven blob name from Azure blob container.
+        """
         try:
             blob_client = self.container_client.get_blob_client(blob=blob_name)
             blob_client.delete_blob()
@@ -38,7 +48,10 @@ class AzureStorageService(StorageProvider):
             logger.error(f"Failed to delete {blob_name} from Azure Blob: {str(e)}")
             return False
 
-    def list_dirs(self, dir_path: str) -> list:
+    def get_blobs_in_dir(self, dir_path: str) -> list:
+        """
+            Method to return all blobs within the given directory path as list from Azure. 
+        """
         try:
             # Azure Blob prefix needs trailing slash if querying inside a directory to prevent partial prefix matches
             prefix = dir_path.lstrip("/")
@@ -49,10 +62,11 @@ class AzureStorageService(StorageProvider):
             blobs_list = []
             for blob in blobs_iter:
                 # Ensure the blob is an immediate child of the current directory prefix
-                # If there are any extra slashes after the prefix, it's in a subdirectory
+                # If there are any extra / after the prefix, it's in a subdirectory
                 remainder = blob.name[len(prefix):]
+                # Skip blobs in subdirectories
                 if "/" in remainder:
-                    continue  # Skip blobs in subdirectories
+                    continue  
                     
                 blobs_list.append({
                     "name": remainder,
@@ -66,6 +80,9 @@ class AzureStorageService(StorageProvider):
             return []
 
     def download_blob(self, blob_name: str) -> Iterator[bytes]:
+        """
+        Method to download the blob for given blob name from Azure. 
+        """
         try:
             blob_name = blob_name.lstrip("/")
             blob_client = self.container_client.get_blob_client(blob=blob_name)
@@ -81,11 +98,13 @@ class AzureStorageService(StorageProvider):
             and return the group of duplicated blob values.
         """
         try:
+            # fetch all blobs with metadata
             blobs_iter = self.container_client.list_blobs(include=["metadata"])
             
-            groups: Dict[str, list] = defaultdict(list) 
+            groups: Dict[str, list] = defaultdict(list) # this is for safety when trying to access unknow 
 
             for blob in blobs_iter:
+                # extract file name
                 filename = blob.name.split("/")[-1]
 
                 # Fetch full blob properties to read content_settings.content_md5

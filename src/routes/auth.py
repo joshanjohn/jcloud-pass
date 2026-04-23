@@ -1,3 +1,10 @@
+"""
+Author : Joshan John
+Student Number : 3092883
+Email: joshanjohn2003@mail.com
+Project : https://github.com/joshanjohn/jcloud-pass.git
+"""
+
 from fastapi import APIRouter, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -11,15 +18,15 @@ router = APIRouter()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "templates"))
 
-# --- GET requests ---
 
 @router.get("/auth/config")
 async def get_firebase_config():
     """
-    Returns Firebase public configuration for the frontend
+    Endpoint to return the firebase configurations 
     """
 
     logger.info("GET request for '/auth/config'")
+
     return {
         "apiKey": firebase_api_key,
         "authDomain": "jcloud-paas.firebaseapp.com",
@@ -42,6 +49,7 @@ async def login_page(request: Request):
         name="auth/login.html"
     )
 
+
 @router.get("/signup", response_class=HTMLResponse)
 async def signup_page(request: Request): 
     """
@@ -52,6 +60,8 @@ async def signup_page(request: Request):
         request=request, 
         name="auth/signup.html"
     )
+
+
 @router.get("/logout")
 async def logout():
     """

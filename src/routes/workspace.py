@@ -1,24 +1,24 @@
+"""
+Author : Joshan John
+Student Number : 3092883
+Email: joshanjohn2003@mail.com
+Project : https://github.com/joshanjohn/jcloud-pass.git
+"""
+
 from fastapi import APIRouter, Request, status, Form, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
-from google.auth.transport import requests
-from pathlib import Path
 import urllib.parse
+from pathlib import Path
 
 from src.services.system_service import SystemService
-from src.services.directory_service import DirectoryService
 from src.utils import logger, token_validation, valid_dir_name
 from src.entities import User
 
 router = APIRouter()
 
-# Initialize templates relative to this file
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "templates"))
-
-firebase_request_adapter = requests.Request()
-
-current_user = None
 
 
 @router.get("/workspace/{folder_path:path}", response_class=HTMLResponse)
@@ -57,9 +57,6 @@ async def workspace(request: Request, folder_path: str = ""):
                 logger.warning(f"Path not found: {current_path}, redirecting to root")
                 return RedirectResponse(url="/workspace/", status_code=status.HTTP_303_SEE_OTHER)
 
-        # Sidebar always shows root-level dirs (or current context, depending on preference)
-        # Here we follow existing logic: it shows items in the current path
-        # sidebar_dirs = sys_service.get_dirs_in_path(current_path)
         workspace_dirs = sys_service.get_dirs_in_path(current_path)
         
         # Fetch blobs and metadata associated with current_path
@@ -99,7 +96,7 @@ async def create_directory(
     path: str = Form("/")
 ):
     """
-    POST request for creating a directory with name on path
+    POST request for creating a directory with name and path
     """    
     logger.info(f"POST request for '/workspace/create_directory'")
     
@@ -207,7 +204,7 @@ async def delete_file(
     full_path: str = Form("/")
     ): 
     """
-    Delete endpoint for file
+    Delete endpoint for file with file id and it's path
     """
     logger.info(f"DELETE request for file :{file_id} - {full_path}")
 
@@ -224,7 +221,7 @@ async def delete_file(
         sys_service = SystemService(user=current_user)
 
         sys_service.delete_file(file_id=file_id,
-                                blob_name=full_path # with name 
+                                file_path=full_path # with name 
                                 )
     
         return {"status": "success", "message": "File deleted successfully"}
@@ -241,15 +238,13 @@ async def delete_file(
 @router.delete("/workspace/dir/")
 async def delete_dir( 
     request: Request,
-    id: str = Form(...),
-    name: str = Form(...),
     path: str = Form("/")
     ): 
 
     """
-    Delete endpoint for file
+    Delete endpoint for directory given its path
     """
-    logger.info(f"DELETE request for folder :{id} - {path}")
+    logger.info(f"DELETE request for folder :{path}")
 
     id_token = request.cookies.get('token')
     
@@ -265,8 +260,6 @@ async def delete_dir(
         sys_service = SystemService(user=current_user)
 
         sys_service.delete_dir(
-            name=name,
-            dir_id=id,
             dir_path=path
         )
 
@@ -286,7 +279,7 @@ async def download_file(
     path: str = Form("/")
 ): 
     """
-    Download endpoint for file
+    POST to ownload endpoint for a file
     """
     logger.info(f"POST request for download: {path}")
 
@@ -326,6 +319,9 @@ async def download_file(
     
 @router.get("/duplicates", response_class=HTMLResponse)
 async def duplicate_files(request: Request): 
+    """
+    Render duplicate files page 
+    """
     logger.info(f"GET request for duplicate items in workspace")
 
     id_token = request.cookies.get('token')
