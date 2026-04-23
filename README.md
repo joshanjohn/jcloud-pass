@@ -37,6 +37,12 @@
 5. Installing project dependencies
    We are using UV as dependency manager, which is very fast and written in RUST. Firstly, we need to sync the project
 
+   install [UV](https://docs.astral.sh/uv/getting-started/installation/#pypi)
+   ```
+   brew install uv
+   ````
+
+   sync the uv project.
    ```
    uv sync
    ```
