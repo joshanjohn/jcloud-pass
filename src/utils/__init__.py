@@ -17,7 +17,8 @@ from src.utils.variables import (logger,
                                  firebase_messagingSenderId,
                                  firebase_appId,
                                  firebase_measurementId,
-                                 azure_connection_string
+                                 azure_connection_string, 
+                                 jcloud_port
                                  )
 
 __all__ = [
@@ -36,5 +37,6 @@ __all__ = [
     "get_parent_path", 
     "valid_dir_name", 
     "azure_connection_string", 
+    "jcloud_port"
 
 ]

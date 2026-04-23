@@ -7,7 +7,7 @@ from pathlib import Path
 
 import uvicorn
 from src.routes.auth import router as auth_router
-from src.utils import logger
+from src.utils import logger, jcloud_port
 from src.routes.workspace import router as workspace_router
 
 BASE_DIR = Path(__file__).resolve().parent 
@@ -47,7 +47,7 @@ async def root(request: Request):
 def main():
    
     logger.info(f"Starting application. BASE_DIR: {BASE_DIR}")
-    uvicorn.run("main:app", reload=True)
+    uvicorn.run("main:app", port=jcloud_port,reload=True)
     
     
 

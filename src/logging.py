@@ -10,6 +10,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from enum import StrEnum
 
+
 # --- Constants ---
 LOG_DIR =".logs"
 LOG_FILE_NAME = "app.log"
