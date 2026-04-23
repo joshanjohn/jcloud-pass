@@ -41,7 +41,7 @@ class DirectoryService:
 
     def get_all_dir(self): 
         """
-        Fetch all directory informations for signed user.
+        Fetch all directory information for the signed user.
         """
         doc = self.metadata_service.get_all_directories(self.user.id)
         return doc
@@ -105,7 +105,7 @@ class DirectoryService:
 
     def get_duplicate_files(self):
         """
-        Fetch duplicated files inside entire system.
+        Fetch duplicated files inside entire cloud system.
         """
 
         duplicates = self.storage_service.duplicated_blob()
@@ -182,7 +182,7 @@ class DirectoryService:
 
     def create_dir(self, name: str, dir_path: str) -> bool:
         """
-        Create a directory.
+        Create a directory in cloud system.
 
         Args:
             name (str): Name of the directory.
@@ -233,7 +233,7 @@ class DirectoryService:
 
     def delete_dir(self,  dir_path: str) -> bool: 
         """
-        Delete a directory.
+        Delete a directory from cloud system.
 
         Args:
             dir_path (str): location of directory.
@@ -243,7 +243,7 @@ class DirectoryService:
 
     def delete_file(self, file_id: str,  file_path: str) -> bool:
         """
-        Create a file.
+        Delete a file from cloud system.
 
         Args:
             file_id (str): file id string.
@@ -275,7 +275,7 @@ class DirectoryService:
 
     def download_file(self, full_path: str): 
         """
-        Download File
+        Download file form cloud system
         Args:
             full_path (str): file location path.
         """
