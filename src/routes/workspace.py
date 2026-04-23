@@ -47,6 +47,7 @@ async def workspace(request: Request, folder_path: str = ""):
         current_path = "/" + folder_path.strip("/") if folder_path else "/"
         parent_path = get_parent_path(current_path)
         parent_workspace_url = "/workspace" if parent_path == "/" else f"/workspace{parent_path}"
+        show_back_button = current_path != "/"
 
         # Validate the path exists if it's not the root
         if current_path != "/":
@@ -82,6 +83,7 @@ async def workspace(request: Request, folder_path: str = ""):
                 "workspace_files": workspace_files,
                 "path": current_path,
                 "parent_workspace_url": parent_workspace_url,
+                "show_back_button": show_back_button,
                 "breadcrumbs": breadcrumbs,
             }
         )
