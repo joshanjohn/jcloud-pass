@@ -10,7 +10,15 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
-from src.utils import firebase_api_key, logger
+from src.utils import (
+    firebase_api_key, 
+    firebase_authDomain,
+    firebase_projectId,
+    firebase_storageBucket,
+    firebase_messagingSenderId,
+    firebase_appId,
+    firebase_measurementId,
+    logger)
 
 router = APIRouter()
 
@@ -29,12 +37,12 @@ async def get_firebase_config():
 
     return {
         "apiKey": firebase_api_key,
-        "authDomain": "jcloud-paas.firebaseapp.com",
-        "projectId": "jcloud-paas",
-        "storageBucket": "jcloud-paas.firebasestorage.app",
-        "messagingSenderId": "758103231649",
-        "appId": "1:758103231649:web:6ab6d4dbbaa972bb4774e0",
-        "measurementId": "G-9DSBL5ZJRT"
+        "authDomain": firebase_authDomain,
+        "projectId": firebase_projectId,
+        "storageBucket": firebase_storageBucket,
+        "messagingSenderId":  firebase_messagingSenderId,
+        "appId": firebase_appId,
+        "measurementId": firebase_measurementId
     }
 
 @router.get("/login", response_class=HTMLResponse)

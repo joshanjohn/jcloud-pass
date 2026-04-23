@@ -142,8 +142,6 @@ class DirectoryService:
         ]
         return {"directory": children}
 
-
-
     def check_file_exists(self, filename: str, path: str) -> bool:
         """
         Check if file exists in metadata.
@@ -205,8 +203,6 @@ class DirectoryService:
             logger.error(f"Error uploading file: {str(e)}")
             return False 
         
-
-
     def get_files_in_path(self, path: str):
         """
         Fetch all file inside a path location. 

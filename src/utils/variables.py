@@ -19,6 +19,16 @@ mongodb_uri = os.getenv("MONGO_DB_URI", "")
 mongodb_dbname = os.getenv("MONGO_DB_NAME")
 
 firebase_api_key = os.getenv("FIREBASE_API_KEY", "")
+firebase_authDomain = os.getenv("FIREBASE_AUTH_DOMAIN", "")
+firebase_projectId = os.getenv("FIREBASE_PROJECT_ID", "")
+firebase_storageBucket = os.getenv("FIREBASE_STORAGEBUCKET", "")
+firebase_messagingSenderId = os.getenv("FIREBASE_MESSAGING_SENDER_ID", "")
+firebase_appId = os.getenv("FIREBASE_APP_ID", "")
+firebase_measurementId = os.getenv("FIREBASE_MEASUREMENT_ID", "")
+
+
+
+
 azure_connection_string = os.getenv("AZURE_CONNECTION_STRING", "")
 
 

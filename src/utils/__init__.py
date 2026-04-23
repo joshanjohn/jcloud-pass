@@ -11,7 +11,13 @@ from src.utils.variables import (logger,
                                  mongodb_uri, 
                                  mongodb_dbname, 
                                  firebase_api_key, 
-                                 azure_connection_string, 
+                                 firebase_authDomain,
+                                 firebase_projectId,
+                                 firebase_storageBucket,
+                                 firebase_messagingSenderId,
+                                 firebase_appId,
+                                 firebase_measurementId,
+                                 azure_connection_string
                                  )
 
 __all__ = [
@@ -21,6 +27,12 @@ __all__ = [
     "mongodb_uri",
     "mongodb_dbname",
     "firebase_api_key", 
+    "firebase_authDomain",
+    "firebase_projectId",
+    "firebase_storageBucket",
+    "firebase_messagingSenderId",
+    "firebase_appId",
+    "firebase_measurementId",
     "get_parent_path", 
     "valid_dir_name", 
     "azure_connection_string", 
