@@ -12,7 +12,7 @@ import urllib.parse
 from pathlib import Path
 
 from src.services.system_service import SystemService
-from src.utils import logger, token_validation, valid_dir_name
+from src.utils import logger, token_validation, valid_dir_name, get_parent_path
 from src.entities import User
 
 router = APIRouter()
@@ -45,6 +45,8 @@ async def workspace(request: Request, folder_path: str = ""):
         
         # Normalise to an absolute path: e.g., "/" or "/docs/projects"
         current_path = "/" + folder_path.strip("/") if folder_path else "/"
+        parent_path = get_parent_path(current_path)
+        parent_workspace_url = "/workspace" if parent_path == "/" else f"/workspace{parent_path}"
 
         # Validate the path exists if it's not the root
         if current_path != "/":
@@ -79,6 +81,7 @@ async def workspace(request: Request, folder_path: str = ""):
                 "workspace_dirs": workspace_dirs,
                 "workspace_files": workspace_files,
                 "path": current_path,
+                "parent_workspace_url": parent_workspace_url,
                 "breadcrumbs": breadcrumbs,
             }
         )

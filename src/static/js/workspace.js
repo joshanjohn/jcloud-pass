@@ -1,4 +1,5 @@
 
+// This function clicks the hidden "Select File" button 
 window.handleUploadTrigger = function (id) {
     const input = document.getElementById(id);
     if (input) {
@@ -7,6 +8,7 @@ window.handleUploadTrigger = function (id) {
     }
 };
 
+// This function starts the upload as soon as you choose a file.
 window.handleFileChange = async function (input) {
     if (input.files && input.files.length > 0) {
         await uploadFile(input);
@@ -56,10 +58,27 @@ async function uploadFile(input, override = false) {
     }
 }
 
+// LOGOUT
 window.handleLogout = function () {
     window.location.href = '/logout';
 };
 
+// workspace back button 
+window.handleWorkspaceBack = function (parentUrl) {
+    if (parentUrl && parentUrl !== window.location.pathname) {
+        window.location.href = parentUrl;
+        return;
+    }
+
+    if (window.history.length > 1) {
+        window.history.back();
+        return;
+    }
+
+    window.location.href = '/workspace';
+};
+
+// Error tost function 
 window.showErrorToast = function (message) {
     const container = document.getElementById('toast-container');
     const template = document.getElementById('toast-template');
@@ -70,6 +89,7 @@ window.showErrorToast = function (message) {
     const messageEl = toast.querySelector('.toast-message');
 
     if (messageEl) {
+        // update message content
         messageEl.textContent = message;
     }
 
@@ -95,6 +115,7 @@ window.showErrorToast = function (message) {
     toast.dataset.timeoutId = timeoutId;
 };
 
+// remove Error tost 
 window.removeToast = function (toast) {
     toast.classList.add('translate-y-4', 'opacity-0');
     if (toast.dataset.timeoutId) {
@@ -341,6 +362,7 @@ window.removeToast = function (toast) {
         }
     }
 
+    // Checking Error messages for create folder model 
     function checkErrors() {
         const urlParams = new URLSearchParams(window.location.search);
         const errorMsg = urlParams.get('error');
