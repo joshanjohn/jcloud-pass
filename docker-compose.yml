@@ -8,4 +8,4 @@ services:
       - /Users/joshan/Documents/CSP/jcloud-pass/azure/data:/data # data
       - /Users/joshan/Documents/CSP/jcloud-pass/.logs:/logs #logs
     # Explicitly calling 'azurite-blob' instead of 'azurite'
-    command: "azurite-blob --skipApiVersionCheck --blobHost 0.0.0.0 --location /data --debug /logs/debug.log"
+    command: "azurite-blob --skipApiVersionCheck --blobHost 0.0.0.0 --location /data --debug /logs/azure.log"
