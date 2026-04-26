@@ -5,7 +5,14 @@ Email: joshanjohn2003@mail.com
 Project : https://github.com/joshanjohn/jcloud-pass.git
 """
 
-from src.utils.helper import get_username_from_email, get_parent_path
+from src.utils.helper import (
+    get_username_from_email,
+    get_parent_path,
+    normalize_dir_path,
+    get_file_directory_path,
+    iter_directory_paths,
+    find_file_in_directories,
+)
 from src.utils.validation import token_validation, valid_dir_name
 from src.utils.variables import (logger, 
                                  mongodb_uri, 
@@ -35,6 +42,10 @@ __all__ = [
     "firebase_appId",
     "firebase_measurementId",
     "get_parent_path", 
+    "normalize_dir_path",
+    "get_file_directory_path",
+    "iter_directory_paths",
+    "find_file_in_directories",
     "valid_dir_name", 
     "azure_connection_string", 
     "jcloud_port"

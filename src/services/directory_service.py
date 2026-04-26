@@ -92,11 +92,18 @@ class DirectoryService:
             logger.debug(f"No metadata entry for path: {lookup_path}")
             return blobs
             
-        # Merge IDs into blobs
-        id_map = { f["name"]: f["id"] for f in folder_meta["data"] if "name" in f and "id" in f }
+        # Merge IDs and metadata timestamps into blobs
+        file_map = {
+            f.get("name"): f
+            for f in folder_meta["data"]
+            if f.get("name") and f.get("id")
+        }
         
         for b in blobs:
-            b["id"] = id_map.get(b["name"], "")
+            file_meta = file_map.get(b["name"])
+            b["id"] = file_meta.get("id", "") if file_meta else ""
+            b["created"] = file_meta.get("meta", {}).get("created") if file_meta else None
+            b["updated"] = file_meta.get("meta", {}).get("updated") if file_meta else None
             if not b["id"]:
                 logger.warning(f"File {b['name']} in storage has no matching metadata ID in DB.")
             
@@ -254,7 +261,7 @@ class DirectoryService:
         try:
             storage_success = self.storage_service.delete_blob(file_path)
             
-            meta_success = self.metadata_service.remove_file_record(self.user.id, file_id)
+            meta_success = self.metadata_service.remove_file_record(self.user.id, file_id, file_path)
             
             return storage_success and meta_success
         except Exception as e:

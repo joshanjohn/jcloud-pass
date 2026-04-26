@@ -67,13 +67,18 @@ class MetadataProvider(ABC):
         pass
 
     @abstractmethod
-    def remove_file_record(self, user_id: str, file_name: str, path: str) -> None:
+    def remove_file_record(self, user_id: str, file_id: str, path: str) -> bool:
         """
         Method to remove file remove file record for given: 
         - user_id
-        - filename
+        - file_id
         - path
         """
         pass
 
-
+    @abstractmethod
+    def update_size(self, user_id: str, dir_path: str, size_delta: float) -> None:
+        """
+        Method to update directory size for the given path and all parents.
+        """
+        pass

@@ -10,7 +10,12 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 
 from src.database.core.mongodb_connection import MongoConnection
-from src.utils import logger, get_username_from_email
+from src.utils import (
+    logger,
+    get_username_from_email,
+    iter_directory_paths,
+    find_file_in_directories,
+)
 from src.entities import File, User
 from src.factory.metadata_provider import MetadataProvider
 
@@ -119,7 +124,7 @@ class MongoMetadataService(MetadataProvider):
         """
         Method to create single file record into the mogodb direcory data document 
         """
-        self.users_col.update_one(
+        result = self.users_col.update_one(
             {   
                 "id": user_id, 
                 "directory.meta.path": path
@@ -132,28 +137,42 @@ class MongoMetadataService(MetadataProvider):
                 # updating folder metadata
                 "$set": {
                     "directory.$.meta.updated": file.meta.updated, 
-                    "directory.$.meta.size": file.meta.size, 
                 }
             }
         )
+        if result.modified_count == 0:
+            raise Exception(f"Directory '{path}' not found")
+
+        self.update_size(user_id, path, float(file.meta.size or 0))
 
     def update_file_record(self, user_id: str, file: File, path: str) -> None:
         """
         Method to updates an existing file record by replacing it with new 
         metadata in mongodb database
         """
-        # First remove the existing file record with the same name
-        self.users_col.update_one(
-            {
-                "id": user_id,
-                "directory.meta.path": path
-            },
-            {
-                "$pull": {
-                    "directory.$.data": {"name": file.name}
+        user_record = self.get_all_directories(user_id)
+        existing_dir, existing_file = find_file_in_directories(user_record, file.id, file.meta.path)
+        if existing_dir and existing_file:
+            existing_size = float(existing_file.get("meta", {}).get("size", 0) or 0)
+            pull_result = self.users_col.update_one(
+                {
+                    "id": user_id,
+                    "directory.meta.path": existing_dir.get("meta", {}).get("path", "")
+                },
+                {
+                    "$pull": {
+                        "directory.$.data": {"id": file.id}
+                    }
                 }
-            }
-        )
+            )
+            if pull_result.modified_count == 0:
+                raise Exception(f"Unable to replace file '{file.id}'")
+            self.update_size(
+                user_id,
+                existing_dir.get("meta", {}).get("path", "/"),
+                -existing_size
+            )
+
         # Then add the new record
         self.create_file_record(user_id, file, path)
 
@@ -234,13 +253,25 @@ class MongoMetadataService(MetadataProvider):
         logger.info(f"Deleted directory for path {dir_path}")
         return True
 
-    def remove_file_record(self, user_id: str, file_id: str) -> None:
+    def remove_file_record(self, user_id: str, file_id: str, path: str) -> bool:
         """
         Method to remove file records for given file id from mongodb direcotory data collection
 
         Raise exception when unable to perform deletion or no file record deleted. 
         """
         try:
+            # fetch all dirs 
+            user_record = self.get_all_directories(user_id)
+            # check if file exists 
+            directory, file_data = find_file_in_directories(user_record, file_id, path)
+            if not directory or not file_data:
+                raise Exception(f"File '{file_id}' not found")
+
+
+            file_size = float(file_data.get("meta", {}).get("size", 0) or 0)
+            directory_path = directory.get("meta", {}).get("path", "/")
+
+            # remove file data
             result = self.users_col.update_one(
                 {"id": user_id},
                 {"$pull": 
@@ -250,10 +281,38 @@ class MongoMetadataService(MetadataProvider):
             )
 
             if result.modified_count == 0:
-                logger.warning(f"File with id '{file_id}' not found via array filter, trying path fallback.")
+                logger.warning(f"File with id '{file_id}' not found via array filter.")
+                raise Exception(f"File '{file_id}' not found")
+
+            # update the folders size 
+            self.update_size(user_id, directory_path, -file_size)
+            logger.info(f"Deleted file record '{file_id}' from {directory_path}")
+            return True
                 
         except Exception as e:
             logger.error(
                 f"Failed to remove file record {file_id} for user {self.user.id}: {str(e)}"
             )
             raise
+
+    def update_size(self, user_id: str, dir_path: str, new_size: float) -> None:
+        """
+        Method to update a directory size and all of its parents.
+        """
+        timestamp = datetime.now()
+        for current_path in iter_directory_paths(dir_path):
+            self.users_col.update_one(
+                {
+                    "id": user_id,
+                    "directory.meta.path": current_path
+                },
+                {
+                    # increment
+                    "$inc": {
+                        "directory.$.meta.size": new_size
+                    },
+                    "$set": {
+                        "directory.$.meta.updated": timestamp
+                    }
+                }
+            )
