@@ -7,6 +7,12 @@
 
 2. create a `.env` file and replace the values for variable provide in `.env.example` file.
 
+   command to copy contents from example.env to .env
+   ```
+   cd jcloud-pass
+   cp .example.env .env
+   ```
+   
     > Note you need to have following things:
     > - monogodb service running
     > - Firebase Authentication with email and password enabled. 
